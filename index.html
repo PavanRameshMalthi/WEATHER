@@ -1,95 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather App</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Font Awesome for search icon -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Weather App</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+
 <body>
-  <div class="card">
-    <div class="search">
-      <input type="search" placeholder="Search here ..." />
-      <button><i class="fa fa-search"></i></button>
-    </div>
 
-    <div class="error">
-      <p>Invalid City Name</p>
-    </div>
+    <div id="animation-layer"></div>
 
-    <div class="weather">
-      <img src="images/rain.png" class="weather-icon">
-      <h1 class="temp">22°C</h1>
-      <h2 class="city">New York</h2>
-      <div class="details">
-        <div class="col">
-          <img src="images/humidity.png">
-          <div>
-            <p class="humidity">50%</p>
-            <p>Humidity</p>
-          </div>
+    <div class="container">
+
+        <div class="top-bar">
+
+            <div class="datetime">
+                <h3 id="date">Date</h3>
+                <p id="time">Time</p>
+            </div>
+
+            <button id="themeToggle">
+                🌙 Theme
+            </button>
+
         </div>
-        <div class="col">
-          <img src="images/wind.png">
-          <div>
-            <p class="wind">15 km/hr</p>
-            <p>Wind Speed</p>
-          </div>
+
+        <div class="card">
+
+            <div class="search">
+
+                <input
+                    type="text"
+                    placeholder="Enter city name..."
+                    id="cityInput">
+
+                <button id="searchBtn">
+                    <i class="fa fa-search"></i>
+                </button>
+
+            </div>
+
+            <div class="location-section">
+
+                <button id="locationBtn">
+                    📍 Use My Location
+                </button>
+
+            </div>
+
+            <div class="history-section">
+
+                <label>
+                    Recent Searches
+                </label>
+
+                <select id="historySelect">
+                    <option value="">
+                        Select Previous Search
+                    </option>
+                </select>
+
+            </div>
+
+            <div class="loading">
+
+                <div class="spinner"></div>
+                <p>Loading weather...</p>
+
+            </div>
+
+            <div class="error">
+
+                <p>
+                    City not found. Please try again.
+                </p>
+
+            </div>
+
+            <div class="alerts"></div>
+
+            <div class="weather">
+
+                <img
+                    src="images/clear.png"
+                    class="weather-icon"
+                    alt="Weather">
+
+                <h1 class="temp">--°C</h1>
+
+                <h2 class="city">
+                    Search a city
+                </h2>
+
+                <p class="country"></p>
+
+                <p class="description"></p>
+
+                <div class="extra-info">
+
+                    <div class="info-box">
+                        <span>Feels Like</span>
+                        <strong class="feels-like">
+                            --
+                        </strong>
+                    </div>
+
+                    <div class="info-box">
+                        <span>Pressure</span>
+                        <strong class="pressure">
+                            --
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="sun-times">
+
+                    <div>
+                        🌅 Sunrise:
+                        <span class="sunrise">
+                            --
+                        </span>
+                    </div>
+
+                    <div>
+                        🌇 Sunset:
+                        <span class="sunset">
+                            --
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="details">
+
+                    <div class="col">
+
+                        <img
+                            src="images/humidity.png"
+                            alt="Humidity">
+
+                        <div>
+
+                            <p class="humidity">
+                                --
+                            </p>
+
+                            <p>
+                                Humidity
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col">
+
+                        <img
+                            src="images/wind.png"
+                            alt="Wind">
+
+                        <div>
+
+                            <p class="wind">
+                                --
+                            </p>
+
+                            <p>
+                                Wind Speed
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="forecast-section">
+
+                <h3>
+                    5-Day Forecast
+                </h3>
+
+                <div
+                    class="forecast-container"
+                    id="forecastContainer">
+
+                </div>
+
+            </div>
+
         </div>
-      </div>
+
     </div>
-  </div>
 
-  <script>
-    const apikey = "d6423fba36e4b31f8259fff92dd65842";
-    const apiurl = "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+    <script src="script.js"></script>
 
-    const searchBox = document.querySelector(".search input");
-    const searchBtn = document.querySelector(".search button");
-    const weatherIcon = document.querySelector(".weather-icon");
-
-    async function checkWeather(city) {
-      const response = await fetch(`${apiurl}${city}&appid=${apikey}`);
-
-      if (response.status == 404) {
-        document.querySelector(".error").style.display = "block";
-        document.querySelector(".weather").style.display = "none";
-      } else {
-        const data = await response.json();
-
-        document.querySelector(".city").innerHTML = data.name;
-        document.querySelector(".temp").innerHTML = Math.round(data.main.temp) + "°C";
-        document.querySelector(".humidity").innerHTML = data.main.humidity + "%";
-        document.querySelector(".wind").innerHTML = data.wind.speed + " km/hr";
-
-        if (data.weather[0].main == "Clouds") {
-          weatherIcon.src = "images/clouds.png";
-        } else if (data.weather[0].main == "Clear") {
-          weatherIcon.src = "images/clear.png";
-        } else if (data.weather[0].main == "Rain") {
-          weatherIcon.src = "images/rain.png";
-        } else if (data.weather[0].main == "Drizzle") {
-          weatherIcon.src = "images/drizzle.png";
-        } else if (data.weather[0].main == "Mist") {
-          weatherIcon.src = "images/mist.png";
-        }
-
-        document.querySelector(".weather").style.display = "block";
-        document.querySelector(".error").style.display = "none";
-      }
-    }
-
-    searchBtn.addEventListener("click", () => {
-      checkWeather(searchBox.value);
-    });
-
-    // Optional: Allow Enter key
-    searchBox.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") {
-        checkWeather(searchBox.value);
-      }
-    });
-  </script>
 </body>
 </html>
