@@ -1,207 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Weather App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+<title>Weather App Pro</title>
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+
+<link
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+rel="stylesheet"
+/>
 </head>
 
 <body>
 
-    <div id="animation-layer"></div>
+<div class="background-overlay"></div>
 
-    <div class="container">
+<div class="container">
 
-        <div class="top-bar">
+    <!-- Header -->
 
-            <div class="datetime">
-                <h3 id="date">Date</h3>
-                <p id="time">Time</p>
+    <header>
+
+        <div class="logo">
+            <i class="fa-solid fa-cloud-sun"></i>
+            Weather Pro
+        </div>
+
+        <div class="header-actions">
+
+            <div class="search-box">
+
+                <input
+                type="text"
+                placeholder="Search city..."
+                id="cityInput">
+
+                <button id="searchBtn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+
             </div>
 
             <button id="themeToggle">
-                🌙 Theme
+                <i class="fa-solid fa-moon"></i>
             </button>
 
         </div>
 
-        <div class="card">
+    </header>
 
-            <div class="search">
+    <!-- Main Dashboard -->
 
-                <input
-                    type="text"
-                    placeholder="Enter city name..."
-                    id="cityInput">
+    <main>
 
-                <button id="searchBtn">
-                    <i class="fa fa-search"></i>
-                </button>
+        <!-- Left Side -->
 
-            </div>
+        <section class="current-weather glass">
 
-            <div class="location-section">
+            <h2>Hyderabad</h2>
 
-                <button id="locationBtn">
-                    📍 Use My Location
-                </button>
+            <p class="date">
+                Monday, June 15
+            </p>
 
-            </div>
+            <div class="weather-icon">
 
-            <div class="history-section">
-
-                <label>
-                    Recent Searches
-                </label>
-
-                <select id="historySelect">
-                    <option value="">
-                        Select Previous Search
-                    </option>
-                </select>
+                ☀️
 
             </div>
 
-            <div class="loading">
+            <h1>32°C</h1>
 
-                <div class="spinner"></div>
-                <p>Loading weather...</p>
+            <p>Sunny</p>
 
-            </div>
+        </section>
 
-            <div class="error">
+        <!-- Right Side -->
 
-                <p>
-                    City not found. Please try again.
-                </p>
+        <section class="weather-details">
 
-            </div>
+            <div class="card glass">
 
-            <div class="alerts"></div>
+                <i class="fa-solid fa-temperature-three-quarters"></i>
 
-            <div class="weather">
+                <h3>Feels Like</h3>
 
-                <img
-                    src="images/clear.png"
-                    class="weather-icon"
-                    alt="Weather">
-
-                <h1 class="temp">--°C</h1>
-
-                <h2 class="city">
-                    Search a city
-                </h2>
-
-                <p class="country"></p>
-
-                <p class="description"></p>
-
-                <div class="extra-info">
-
-                    <div class="info-box">
-                        <span>Feels Like</span>
-                        <strong class="feels-like">
-                            --
-                        </strong>
-                    </div>
-
-                    <div class="info-box">
-                        <span>Pressure</span>
-                        <strong class="pressure">
-                            --
-                        </strong>
-                    </div>
-
-                </div>
-
-                <div class="sun-times">
-
-                    <div>
-                        🌅 Sunrise:
-                        <span class="sunrise">
-                            --
-                        </span>
-                    </div>
-
-                    <div>
-                        🌇 Sunset:
-                        <span class="sunset">
-                            --
-                        </span>
-                    </div>
-
-                </div>
-
-                <div class="details">
-
-                    <div class="col">
-
-                        <img
-                            src="images/humidity.png"
-                            alt="Humidity">
-
-                        <div>
-
-                            <p class="humidity">
-                                --
-                            </p>
-
-                            <p>
-                                Humidity
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div class="col">
-
-                        <img
-                            src="images/wind.png"
-                            alt="Wind">
-
-                        <div>
-
-                            <p class="wind">
-                                --
-                            </p>
-
-                            <p>
-                                Wind Speed
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
+                <p>35°C</p>
 
             </div>
 
-            <div class="forecast-section">
+            <div class="card glass">
 
-                <h3>
-                    5-Day Forecast
-                </h3>
+                <i class="fa-solid fa-droplet"></i>
 
-                <div
-                    class="forecast-container"
-                    id="forecastContainer">
+                <h3>Humidity</h3>
 
-                </div>
+                <p>72%</p>
 
+            </div>
+
+            <div class="card glass">
+
+                <i class="fa-solid fa-wind"></i>
+
+                <h3>Wind</h3>
+
+                <p>15 km/h</p>
+
+            </div>
+
+            <div class="card glass">
+
+                <i class="fa-solid fa-eye"></i>
+
+                <h3>Visibility</h3>
+
+                <p>10 km</p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Forecast -->
+
+    <section class="forecast glass">
+
+        <h2>5 Day Forecast</h2>
+
+        <div class="forecast-container">
+
+            <div class="forecast-card">
+                <h4>Mon</h4>
+                <p>☀️</p>
+                <p>33°C</p>
+            </div>
+
+            <div class="forecast-card">
+                <h4>Tue</h4>
+                <p>🌧️</p>
+                <p>28°C</p>
+            </div>
+
+            <div class="forecast-card">
+                <h4>Wed</h4>
+                <p>☁️</p>
+                <p>30°C</p>
+            </div>
+
+            <div class="forecast-card">
+                <h4>Thu</h4>
+                <p>☀️</p>
+                <p>34°C</p>
+            </div>
+
+            <div class="forecast-card">
+                <h4>Fri</h4>
+                <p>🌦️</p>
+                <p>29°C</p>
             </div>
 
         </div>
 
-    </div>
+    </section>
 
-    <script src="script.js"></script>
+    <!-- Bottom Section -->
+
+    <section class="bottom-grid">
+
+        <!-- Favorites -->
+
+        <div class="glass panel">
+
+            <h2>Favorite Cities</h2>
+
+            <ul>
+
+                <li>⭐ Hyderabad</li>
+                <li>⭐ Bangalore</li>
+                <li>⭐ Chennai</li>
+
+            </ul>
+
+        </div>
+
+        <!-- Search History -->
+
+        <div class="glass panel">
+
+            <h2>Recent Searches</h2>
+
+            <ul>
+
+                <li>Delhi</li>
+                <li>Mumbai</li>
+                <li>Pune</li>
+
+            </ul>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="js/theme.js"></script>
+<script src="js/app.js"></script>
 
 </body>
 </html>
