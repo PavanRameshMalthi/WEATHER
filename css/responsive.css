@@ -196,3 +196,69 @@
 
   .forecast-card { min-width: 95px; }
 }
+
+/* ── Advanced Features Responsive Additions ────────────── */
+@media (max-width: 1200px) {
+  .hero-layout {
+    grid-template-columns: 1fr;
+  }
+  .grid-recs-details {
+    grid-template-columns: 1fr;
+  }
+  .forecast-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .nearby-cities-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .settings-panel {
+    width: calc(100% - 32px);
+    right: 16px;
+    top: 190px;
+  }
+  .details-grid-horizontal {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .nearby-cities-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-panel {
+    top: 240px;
+  }
+  .details-grid-horizontal {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .analytics-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .nearby-cities-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .chart-canvas-container {
+    height: 180px;
+  }
+}

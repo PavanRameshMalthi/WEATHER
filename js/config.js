@@ -15,4 +15,23 @@ const CONFIG = {
   UNITS: "metric",
   HISTORY_LIMIT: 8,
   FAVORITES_LIMIT: 10,
+  DEFAULT_COMPARISON_CITIES: ["Kakinada", "Hyderabad", "Bangalore", "Chennai", "Delhi"],
+  CHART_COLORS: {
+    temp: {
+      border: "rgba(255, 99, 132, 1)",
+      bg: "rgba(255, 99, 132, 0.2)"
+    },
+    humidity: {
+      border: "rgba(54, 162, 235, 1)",
+      bg: "rgba(54, 162, 235, 0.2)"
+    },
+    wind: {
+      border: "rgba(75, 192, 192, 1)",
+      bg: "rgba(75, 192, 192, 0.2)"
+    },
+    rain: {
+      border: "rgba(153, 102, 255, 1)",
+      bg: "rgba(153, 102, 255, 0.4)"
+    }
+  }
 };

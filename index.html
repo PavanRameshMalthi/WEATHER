@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Weather App Pro – Real-time weather forecasts, AQI, hourly & 5-day forecast, interactive map, and favorite cities. Built with OpenWeatherMap API.">
-  <meta name="keywords" content="weather, forecast, temperature, AQI, air quality, weather map, real-time weather">
+  <meta name="description" content="Weather App Pro – Advanced real-time weather platform. Built with OpenWeatherMap API, Leaflet, and Chart.js.">
+  <meta name="keywords" content="weather, forecast, temperature, AQI, air quality, weather map, real-time weather, analytics, weather alerts">
   <meta name="author" content="Weather App Pro">
-  <meta property="og:title" content="Weather App Pro">
-  <meta property="og:description" content="Real-time weather with AQI, forecasts, and interactive maps.">
+  <meta property="og:title" content="Weather App Pro – Advanced Weather Platform">
+  <meta property="og:description" content="Real-time weather with AQI, interactive map, analytics charts, and precise geocoding.">
   <meta property="og:type" content="website">
-  <title>Weather App Pro – Real-Time Forecasts</title>
+  <title>Weather App Pro – Advanced Weather Platform</title>
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/style.css">
@@ -20,6 +20,9 @@
 
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -31,14 +34,12 @@
 
     <!-- ── Header ──────────────────────────────────────── -->
     <header class="glass">
-
       <div class="logo">
         <i class="fa-solid fa-cloud-sun"></i>
         Weather Pro
       </div>
 
       <div class="header-right">
-
         <!-- Search -->
         <div class="search-box">
           <input
@@ -62,7 +63,7 @@
         <!-- Search History -->
         <div class="history-wrap">
           <select id="historySelect" aria-label="Recent searches">
-            <option value="">🕑 Recent Searches</option>
+            <option value="">Option</option>
           </select>
           <button id="clearHistoryBtn" aria-label="Clear search history">
             <i class="fa-solid fa-trash-can"></i> Clear
@@ -74,8 +75,33 @@
           <i class="fa-solid fa-moon"></i>
         </button>
 
+        <!-- Settings Toggle -->
+        <button id="settingsToggle" aria-label="API Key Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
       </div>
     </header>
+
+    <!-- ── Settings Panel (Hidden by default) ───────────── -->
+    <div id="settingsPanel" class="settings-panel glass hidden">
+      <h3><i class="fa-solid fa-gear"></i> Settings & API Key</h3>
+      <div class="settings-group">
+        <label for="apiKeyInput">OpenWeatherMap API Key</label>
+        <div class="input-row">
+          <input type="password" id="apiKeyInput" placeholder="Enter your OWM API key...">
+          <button id="toggleApiKeyVisibility" class="icon-btn" aria-label="Toggle API Key visibility">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+        <p class="settings-hint">
+          Your key is saved locally in your browser cache. Leave blank to use the built-in demo key.
+        </p>
+      </div>
+      <div class="settings-actions">
+        <button id="saveSettingsBtn" class="primary-btn">Save Key</button>
+        <button id="resetSettingsBtn" class="secondary-btn">Reset</button>
+      </div>
+    </div>
 
     <!-- ── Empty State ──────────────────────────────────── -->
     <div id="emptyState" class="state-screen glass">
@@ -106,73 +132,127 @@
     ══════════════════════════════════════════════════ -->
     <div id="weatherContent" class="hidden">
 
-      <!-- ── Current Weather Hero ──────────────────────── -->
-      <section class="current-weather glass" aria-label="Current weather">
-        <div class="cw-left">
-          <div class="city-row">
-            <h1 class="city">––</h1>
-            <span class="country">––</span>
-          </div>
-
-          <div class="temp-row">
-            <div class="temp">––°C</div>
-          </div>
-
-          <p class="description">––</p>
-
-          <div class="datetime-row">
-            <p id="date"></p>
-            <p id="time"></p>
-          </div>
-
-          <button id="addFavoriteBtn" aria-label="Add to favorites">
-            <i class="fa-regular fa-star"></i> Add to Favorites
-          </button>
-        </div>
-
-        <div class="cw-right">
-          <img
-            class="weather-icon-img"
-            src=""
-            alt="Weather condition icon"
-            width="130"
-            height="130"
-          >
-        </div>
+      <!-- ── Alerts Banner ─────────────────────────────── -->
+      <section id="alertsBanner" class="alerts-banner hidden" aria-label="Weather Alerts">
+        <!-- Dynamic Alerts injected here -->
       </section>
 
-      <!-- ── Weather Detail Cards ───────────────────────── -->
-      <section class="details-grid" aria-label="Weather details">
+      <!-- ── Current Weather Hero + Precise Location ──── -->
+      <div class="hero-layout">
+        <!-- Main Current Weather -->
+        <section class="current-weather glass" aria-label="Current weather">
+          <div class="cw-left">
+            <div class="city-row">
+              <h1 class="city">––</h1>
+              <span class="country">––</span>
+            </div>
 
-        <div class="detail-card glass">
-          <div class="dc-icon"><i class="fa-solid fa-temperature-three-quarters"></i></div>
-          <div class="dc-label">Feels Like</div>
-          <div class="dc-value feels-like">––</div>
-        </div>
+            <div class="temp-row">
+              <div class="temp">––°C</div>
+            </div>
 
-        <div class="detail-card glass">
-          <div class="dc-icon"><i class="fa-solid fa-droplet"></i></div>
-          <div class="dc-label">Humidity</div>
-          <div class="dc-value humidity">––</div>
-        </div>
+            <p class="description">––</p>
 
-        <div class="detail-card glass">
-          <div class="dc-icon"><i class="fa-solid fa-wind"></i></div>
-          <div class="dc-label">Wind Speed</div>
-          <div class="dc-value wind">––</div>
-        </div>
+            <div class="datetime-row">
+              <p id="date"></p>
+              <p id="time"></p>
+            </div>
 
-        <div class="detail-card glass">
-          <div class="dc-icon"><i class="fa-solid fa-gauge-high"></i></div>
-          <div class="dc-label">Pressure</div>
-          <div class="dc-value pressure">––</div>
-        </div>
+            <button id="addFavoriteBtn" aria-label="Add to favorites">
+              <i class="fa-regular fa-star"></i> Add to Favorites
+            </button>
+          </div>
 
-      </section>
+          <div class="cw-right">
+            <!-- Animated CSS Weather Icon Container -->
+            <div id="animatedIconContainer" class="animated-icon-container">
+              <!-- Pure CSS animated icon goes here -->
+            </div>
+            <!-- Fallback OWM image (hidden, but updated to preserve binds if any code references it) -->
+            <img
+              class="weather-icon-img hidden"
+              src=""
+              alt="Weather condition icon"
+              width="130"
+              height="130"
+            >
+          </div>
+        </section>
+
+        <!-- Precise Location Details -->
+        <section id="locationPanel" class="location-panel glass" aria-label="Precise Location Information">
+          <h3><i class="fa-solid fa-map-pin"></i> Precise Location</h3>
+          <div class="location-details">
+            <div class="loc-item">
+              <span class="loc-label">Area / District</span>
+              <span class="loc-value" id="locDistrict">––</span>
+            </div>
+            <div class="loc-item">
+              <span class="loc-label">State / Region</span>
+              <span class="loc-value" id="locState">––</span>
+            </div>
+            <div class="loc-item">
+              <span class="loc-label">Country</span>
+              <span class="loc-value" id="locCountry">––</span>
+            </div>
+            <div class="loc-grid">
+              <div class="loc-item">
+                <span class="loc-label">Latitude</span>
+                <span class="loc-value" id="locLat">––</span>
+              </div>
+              <div class="loc-item">
+                <span class="loc-label">Longitude</span>
+                <span class="loc-value" id="locLon">––</span>
+              </div>
+            </div>
+            <div class="loc-item">
+              <span class="loc-label">Accuracy Radius</span>
+              <span class="loc-value" id="locAccuracy">Auto (IP-approx)</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── Recommendation Engine & Secondary Details ── -->
+      <div class="grid-recs-details">
+        <!-- Weather Recommendation Engine -->
+        <section id="recommendationsPanel" class="recommendations-panel glass" aria-label="Weather Recommendations">
+          <h3><i class="fa-solid fa-lightbulb"></i> Weather Recommendations</h3>
+          <div id="recommendationsList" class="recommendations-list">
+            <!-- Dynamic Recommendation Cards here -->
+          </div>
+        </section>
+
+        <!-- Detail Cards Grid -->
+        <section class="details-grid-horizontal" aria-label="Weather details">
+          <div class="detail-card glass">
+            <div class="dc-icon"><i class="fa-solid fa-temperature-three-quarters"></i></div>
+            <div class="dc-label">Feels Like</div>
+            <div class="dc-value feels-like">––</div>
+          </div>
+
+          <div class="detail-card glass">
+            <div class="dc-icon"><i class="fa-solid fa-droplet"></i></div>
+            <div class="dc-label">Humidity</div>
+            <div class="dc-value humidity">––</div>
+          </div>
+
+          <div class="detail-card glass">
+            <div class="dc-icon"><i class="fa-solid fa-wind"></i></div>
+            <div class="dc-label">Wind Speed</div>
+            <div class="dc-value wind">––</div>
+          </div>
+
+          <div class="detail-card glass">
+            <div class="dc-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="dc-label">Pressure</div>
+            <div class="dc-value pressure">––</div>
+          </div>
+        </section>
+      </div>
 
       <!-- ── Secondary Row: AQI + Sunrise/Sunset + Extra ── -->
       <section class="secondary-grid" aria-label="Air quality and sun times">
-
         <!-- AQI Card -->
         <div id="aqiCard" class="glass aqi-card">
           <h3><i class="fa-solid fa-leaf"></i> Air Quality Index</h3>
@@ -226,7 +306,6 @@
             </div>
           </div>
         </div>
-
       </section>
 
       <!-- ── Hourly Forecast ───────────────────────────── -->
@@ -239,19 +318,118 @@
         </div>
       </section>
 
-      <!-- ── 5-Day Forecast ────────────────────────────── -->
-      <section class="forecast-section glass" aria-label="5-day forecast">
+      <!-- ── 5-Day Forecast & Chart ────────────────────── -->
+      <div class="forecast-layout">
+        <!-- 5-Day Forecast Cards -->
+        <section class="forecast-section glass" aria-label="5-day forecast">
+          <div class="section-title">
+            <i class="fa-solid fa-calendar-days"></i> 5-Day Forecast
+          </div>
+          <div id="forecastContainer">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+        <!-- 7-Day / 5-Day Forecast Chart (Phase 8) -->
+        <section id="forecastChartSection" class="forecast-chart-section glass" aria-label="Forecast Chart">
+          <div class="section-title-row">
+            <span class="section-title"><i class="fa-solid fa-chart-line"></i> Trend Analysis Chart</span>
+            <div class="chart-toggles">
+              <button id="toggleChartTemp" class="chart-toggle-btn active">Temp</button>
+              <button id="toggleChartHumidity" class="chart-toggle-btn">Humidity</button>
+              <button id="toggleChartRain" class="chart-toggle-btn">Rain %</button>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="forecastTrendChart"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── Weather Analytics Dashboard (Phase 7) ──────── -->
+      <section id="analyticsSection" class="analytics-section glass" aria-label="Weather Analytics Dashboard">
         <div class="section-title">
-          <i class="fa-solid fa-calendar-days"></i> 5-Day Forecast
+          <i class="fa-solid fa-chart-pie"></i> Weather Analytics Dashboard
         </div>
-        <div id="forecastContainer">
-          <!-- Populated by JS -->
+        <div class="analytics-stats">
+          <div class="stat-card">
+            <span class="stat-title">Highest Temp</span>
+            <span class="stat-value" id="statMaxTemp">––</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Lowest Temp</span>
+            <span class="stat-value" id="statMinTemp">––</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Avg Temperature</span>
+            <span class="stat-value" id="statAvgTemp">––</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Wind Speed Trend</span>
+            <span class="stat-value" id="statAvgWind">––</span>
+          </div>
+        </div>
+        <div class="analytics-charts-grid">
+          <div class="analytics-chart-wrap">
+            <h4>Temperature Range (°C)</h4>
+            <div class="canvas-wrap"><canvas id="analyticsTempChart"></canvas></div>
+          </div>
+          <div class="analytics-chart-wrap">
+            <h4>Humidity Trend (%)</h4>
+            <div class="canvas-wrap"><canvas id="analyticsHumidityChart"></canvas></div>
+          </div>
+          <div class="analytics-chart-wrap">
+            <h4>Pressure Trend (hPa)</h4>
+            <div class="canvas-wrap"><canvas id="analyticsPressureChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Multi-City Comparison (Phase 6) ────────────── -->
+      <section id="comparisonSection" class="comparison-section glass" aria-label="Multi-City Comparison">
+        <div class="comparison-header">
+          <div class="section-title">
+            <i class="fa-solid fa-right-left"></i> Multi-City Weather Comparison
+          </div>
+          <div class="comparison-controls">
+            <div class="comparison-search">
+              <input type="text" id="comparisonInput" placeholder="Add city to compare...">
+              <button id="addComparisonBtn"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <button id="refreshComparisonBtn" class="action-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table id="comparisonTable">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="city">City <i class="fa-solid fa-sort"></i></th>
+                <th class="sortable" data-sort="temp">Temp (°C) <i class="fa-solid fa-sort"></i></th>
+                <th class="sortable" data-sort="humidity">Humidity (%) <i class="fa-solid fa-sort"></i></th>
+                <th class="sortable" data-sort="wind">Wind (km/h) <i class="fa-solid fa-sort"></i></th>
+                <th>Weather</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonBody">
+              <!-- Comparison rows populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Nearby Cities Weather (Phase 13) ────────────── -->
+      <section id="nearbyCitiesSection" class="nearby-cities-section glass" aria-label="Nearby Cities Weather">
+        <div class="section-title">
+          <i class="fa-solid fa-location-dot"></i> Weather in Nearby Cities
+        </div>
+        <div id="nearbyCitiesContainer" class="nearby-cities-container">
+          <!-- Populated dynamically by JS -->
         </div>
       </section>
 
       <!-- ── Bottom Grid: Favorites + Map ─────────────── -->
       <div class="bottom-grid">
-
         <!-- Favorites Panel -->
         <aside class="favorites-panel glass" aria-label="Favorite cities">
           <div class="panel-header">
@@ -270,7 +448,6 @@
           </div>
           <div id="weatherMap"></div>
         </div>
-
       </div>
       <!-- /bottom-grid -->
 
