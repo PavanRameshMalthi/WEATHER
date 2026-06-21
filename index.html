@@ -1,216 +1,297 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Weather App Pro – Real-time weather forecasts, AQI, hourly & 5-day forecast, interactive map, and favorite cities. Built with OpenWeatherMap API.">
+  <meta name="keywords" content="weather, forecast, temperature, AQI, air quality, weather map, real-time weather">
+  <meta name="author" content="Weather App Pro">
+  <meta property="og:title" content="Weather App Pro">
+  <meta property="og:description" content="Real-time weather with AQI, forecasts, and interactive maps.">
+  <meta property="og:type" content="website">
+  <title>Weather App Pro – Real-Time Forecasts</title>
 
-<title>Weather App Pro</title>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
 
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/responsive.css">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<link
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-rel="stylesheet"
-/>
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
-
 <body>
 
-<div class="background-overlay"></div>
+  <!-- ══ Dynamic Weather Animation Layer ══════════════════ -->
+  <div id="animation-layer" class="animation-layer"></div>
 
-<div class="container">
+  <!-- ══ Main Container ══════════════════════════════════ -->
+  <div class="container">
 
-    <!-- Header -->
+    <!-- ── Header ──────────────────────────────────────── -->
+    <header class="glass">
 
-    <header>
+      <div class="logo">
+        <i class="fa-solid fa-cloud-sun"></i>
+        Weather Pro
+      </div>
 
-        <div class="logo">
-            <i class="fa-solid fa-cloud-sun"></i>
-            Weather Pro
+      <div class="header-right">
+
+        <!-- Search -->
+        <div class="search-box">
+          <input
+            type="text"
+            id="cityInput"
+            placeholder="Search city or country…"
+            autocomplete="off"
+            aria-label="Search for a city"
+          >
+          <button id="searchBtn" aria-label="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
         </div>
 
-        <div class="header-actions">
-
-            <div class="search-box">
-
-                <input
-                type="text"
-                placeholder="Search city..."
-                id="cityInput">
-
-                <button id="searchBtn">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-
-            </div>
-
-            <button id="themeToggle">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-
-        </div>
-
-    </header>
-
-    <!-- Main Dashboard -->
-
-    <main>
-
-        <!-- Left Side -->
-
-        <section class="current-weather glass">
-
-            <h2>Hyderabad</h2>
-
-            <p class="date">
-                Monday, June 15
-            </p>
-
-            <div class="weather-icon">
-
-                ☀️
-
-            </div>
-
-            <h1>32°C</h1>
-
-            <p>Sunny</p>
-
-        </section>
-
-        <!-- Right Side -->
-
-        <section class="weather-details">
-
-            <div class="card glass">
-
-                <i class="fa-solid fa-temperature-three-quarters"></i>
-
-                <h3>Feels Like</h3>
-
-                <p>35°C</p>
-
-            </div>
-
-            <div class="card glass">
-
-                <i class="fa-solid fa-droplet"></i>
-
-                <h3>Humidity</h3>
-
-                <p>72%</p>
-
-            </div>
-
-            <div class="card glass">
-
-                <i class="fa-solid fa-wind"></i>
-
-                <h3>Wind</h3>
-
-                <p>15 km/h</p>
-
-            </div>
-
-            <div class="card glass">
-
-                <i class="fa-solid fa-eye"></i>
-
-                <h3>Visibility</h3>
-
-                <p>10 km</p>
-
-            </div>
-
-        </section>
-
-    </main>
-
-    <!-- Forecast -->
-
-    <section class="forecast glass">
-
-        <h2>5 Day Forecast</h2>
-
-        <div class="forecast-container">
-
-            <div class="forecast-card">
-                <h4>Mon</h4>
-                <p>☀️</p>
-                <p>33°C</p>
-            </div>
-
-            <div class="forecast-card">
-                <h4>Tue</h4>
-                <p>🌧️</p>
-                <p>28°C</p>
-            </div>
-
-            <div class="forecast-card">
-                <h4>Wed</h4>
-                <p>☁️</p>
-                <p>30°C</p>
-            </div>
-
-            <div class="forecast-card">
-                <h4>Thu</h4>
-                <p>☀️</p>
-                <p>34°C</p>
-            </div>
-
-            <div class="forecast-card">
-                <h4>Fri</h4>
-                <p>🌦️</p>
-                <p>29°C</p>
-            </div>
-
-        </div>
-
-    </section>
-
-    <!-- Bottom Section -->
-
-    <section class="bottom-grid">
-
-        <!-- Favorites -->
-
-        <div class="glass panel">
-
-            <h2>Favorite Cities</h2>
-
-            <ul>
-
-                <li>⭐ Hyderabad</li>
-                <li>⭐ Bangalore</li>
-                <li>⭐ Chennai</li>
-
-            </ul>
-
-        </div>
+        <!-- Geolocation -->
+        <button id="locationBtn" aria-label="Use my location">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          Use My Location
+        </button>
 
         <!-- Search History -->
-
-        <div class="glass panel">
-
-            <h2>Recent Searches</h2>
-
-            <ul>
-
-                <li>Delhi</li>
-                <li>Mumbai</li>
-                <li>Pune</li>
-
-            </ul>
-
+        <div class="history-wrap">
+          <select id="historySelect" aria-label="Recent searches">
+            <option value="">🕑 Recent Searches</option>
+          </select>
+          <button id="clearHistoryBtn" aria-label="Clear search history">
+            <i class="fa-solid fa-trash-can"></i> Clear
+          </button>
         </div>
 
-    </section>
+        <!-- Theme Toggle -->
+        <button id="themeToggle" aria-label="Toggle dark mode">
+          <i class="fa-solid fa-moon"></i>
+        </button>
 
-</div>
+      </div>
+    </header>
 
-<script src="js/theme.js"></script>
-<script src="js/app.js"></script>
+    <!-- ── Empty State ──────────────────────────────────── -->
+    <div id="emptyState" class="state-screen glass">
+      <div class="state-icon">🌤️</div>
+      <h2>Search for a city to get started</h2>
+      <p>Enter any city name in the search bar above, or click <strong>Use My Location</strong> to get instant local weather.</p>
+    </div>
+
+    <!-- ── Loading State ────────────────────────────────── -->
+    <div id="loadingState" class="state-screen glass hidden">
+      <div class="spinner"></div>
+      <h2>Fetching weather…</h2>
+      <p>Getting the latest data for you.</p>
+    </div>
+
+    <!-- ── Error State ───────────────────────────────────── -->
+    <div id="errorState" class="state-screen glass hidden">
+      <div class="state-icon">⚠️</div>
+      <h2>Oops! Something went wrong</h2>
+      <p id="errorMsg">City not found. Please check the spelling and try again.</p>
+      <button class="retry-btn" onclick="document.getElementById('cityInput').focus()">
+        <i class="fa-solid fa-rotate-right"></i> Try Again
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         WEATHER CONTENT (hidden until data loads)
+    ══════════════════════════════════════════════════ -->
+    <div id="weatherContent" class="hidden">
+
+      <!-- ── Current Weather Hero ──────────────────────── -->
+      <section class="current-weather glass" aria-label="Current weather">
+        <div class="cw-left">
+          <div class="city-row">
+            <h1 class="city">––</h1>
+            <span class="country">––</span>
+          </div>
+
+          <div class="temp-row">
+            <div class="temp">––°C</div>
+          </div>
+
+          <p class="description">––</p>
+
+          <div class="datetime-row">
+            <p id="date"></p>
+            <p id="time"></p>
+          </div>
+
+          <button id="addFavoriteBtn" aria-label="Add to favorites">
+            <i class="fa-regular fa-star"></i> Add to Favorites
+          </button>
+        </div>
+
+        <div class="cw-right">
+          <img
+            class="weather-icon-img"
+            src=""
+            alt="Weather condition icon"
+            width="130"
+            height="130"
+          >
+        </div>
+      </section>
+
+      <!-- ── Weather Detail Cards ───────────────────────── -->
+      <section class="details-grid" aria-label="Weather details">
+
+        <div class="detail-card glass">
+          <div class="dc-icon"><i class="fa-solid fa-temperature-three-quarters"></i></div>
+          <div class="dc-label">Feels Like</div>
+          <div class="dc-value feels-like">––</div>
+        </div>
+
+        <div class="detail-card glass">
+          <div class="dc-icon"><i class="fa-solid fa-droplet"></i></div>
+          <div class="dc-label">Humidity</div>
+          <div class="dc-value humidity">––</div>
+        </div>
+
+        <div class="detail-card glass">
+          <div class="dc-icon"><i class="fa-solid fa-wind"></i></div>
+          <div class="dc-label">Wind Speed</div>
+          <div class="dc-value wind">––</div>
+        </div>
+
+        <div class="detail-card glass">
+          <div class="dc-icon"><i class="fa-solid fa-gauge-high"></i></div>
+          <div class="dc-label">Pressure</div>
+          <div class="dc-value pressure">––</div>
+        </div>
+
+      </section>
+
+      <!-- ── Secondary Row: AQI + Sunrise/Sunset + Extra ── -->
+      <section class="secondary-grid" aria-label="Air quality and sun times">
+
+        <!-- AQI Card -->
+        <div id="aqiCard" class="glass aqi-card">
+          <h3><i class="fa-solid fa-leaf"></i> Air Quality Index</h3>
+          <div class="aqi-display">
+            <div id="aqiValue">–</div>
+            <div class="aqi-meta">
+              <div id="aqiLabel">Loading…</div>
+              <div class="aqi-comp">
+                <span id="pm25"></span>
+                <span id="pm10"></span>
+              </div>
+            </div>
+          </div>
+          <div class="aqi-bar-track">
+            <div id="aqiBar"></div>
+          </div>
+        </div>
+
+        <!-- Sunrise / Sunset Card -->
+        <div class="sun-card glass">
+          <h3><i class="fa-solid fa-sun"></i> Sun Times</h3>
+          <div class="sun-times">
+            <div class="sun-item">
+              <i class="fa-solid fa-sunrise"></i>
+              <span class="sun-label">Sunrise</span>
+              <span class="sun-time sunrise">––</span>
+            </div>
+            <div class="sun-item">
+              <i class="fa-solid fa-sunset"></i>
+              <span class="sun-label">Sunset</span>
+              <span class="sun-time sunset">––</span>
+            </div>
+          </div>
+          <div class="day-length-row">
+            <i class="fa-regular fa-clock"></i>
+            Day length: <span class="day-length">––</span>
+          </div>
+        </div>
+
+        <!-- Visibility + Extra -->
+        <div class="extra-card glass">
+          <h3><i class="fa-solid fa-circle-info"></i> More Info</h3>
+          <div class="extra-grid">
+            <div class="extra-item">
+              <span class="ei-label"><i class="fa-solid fa-eye"></i> Visibility</span>
+              <span class="ei-value visibility">––</span>
+            </div>
+            <div class="extra-item">
+              <span class="ei-label"><i class="fa-solid fa-gauge"></i> Pressure</span>
+              <span class="ei-value pressure">––</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── Hourly Forecast ───────────────────────────── -->
+      <section class="hourly-section glass" aria-label="Hourly forecast">
+        <div class="section-title">
+          <i class="fa-solid fa-clock"></i> Next 24 Hours
+        </div>
+        <div id="hourlyContainer">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ── 5-Day Forecast ────────────────────────────── -->
+      <section class="forecast-section glass" aria-label="5-day forecast">
+        <div class="section-title">
+          <i class="fa-solid fa-calendar-days"></i> 5-Day Forecast
+        </div>
+        <div id="forecastContainer">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ── Bottom Grid: Favorites + Map ─────────────── -->
+      <div class="bottom-grid">
+
+        <!-- Favorites Panel -->
+        <aside class="favorites-panel glass" aria-label="Favorite cities">
+          <div class="panel-header">
+            <h2><i class="fa-solid fa-star"></i> Favorite Cities</h2>
+          </div>
+          <ul id="favoritesList">
+            <!-- Populated by JS -->
+          </ul>
+        </aside>
+
+        <!-- Weather Map -->
+        <div class="map-panel glass" aria-label="Weather map">
+          <div class="map-panel-header">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Weather Map
+          </div>
+          <div id="weatherMap"></div>
+        </div>
+
+      </div>
+      <!-- /bottom-grid -->
+
+    </div>
+    <!-- /weatherContent -->
+
+  </div>
+  <!-- /container -->
+
+  <!-- ══ Scripts ══════════════════════════════════════════ -->
+  <!-- Leaflet Map -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App config (API key) -->
+  <script src="js/config.js"></script>
+
+  <!-- Theme manager (runs before DOMContentLoaded) -->
+  <script src="js/theme.js"></script>
+
+  <!-- Main application -->
+  <script src="js/script.js"></script>
 
 </body>
 </html>
