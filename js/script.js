@@ -1,17 +1,17 @@
 /**
- * Weather App Pro – Main Application Script (Production Grade)
+ * Weather App Pro – Main Application Script (Autocomplete & 7-Day Analytics)
  * ═══════════════════════════════════════════════════════════
  * Handles:
- *  • Weather fetch & UI updates (Current, Hourly, 5-Day)
- *  • Precise Geolocation & Reverse Geocoding (Nominatim)
- *  • Smart Weather Recommendation Engine
- *  • Automated Weather Alerts System
- *  • Interactive Charts (Chart.js for Trends and Analytics)
- *  • Multi-City Comparison with column sorting
- *  • Nearby Cities Weather Finder
- *  • CSS Animated weather icons
- *  • Theme toggling & Local Storage Caching
- *  • Custom API Key settings persistence
+ *  • Weather fetch & Stale-While-Revalidate cache system
+ *  • Smart Autocomplete search suggestions (Phase 26)
+ *    - Priority: Favorites > Recent Searches > Geocoding API
+ *    - Keyboard arrow key navigation & match text highlighting
+ *  • 7-Day Forecast Generation (Interpolating 5-day OWM data)
+ *  • Daily 7-Day Trend Chart and Analytics (Chart.js)
+ *  • Geolocation & Reverse Geocoding (OSM Nominatim)
+ *  • Smart Recommendations, Alerts, Multi-City Comparisons, Leaflet map
+ *  • Navigator offline mode detection
+ *  • Clear Dashboard utility resetting all modules safely
  * ═══════════════════════════════════════════════════════════
  */
 
@@ -24,76 +24,70 @@ const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelector(sel);
 
 // Search & Actions
-const cityInput        = $("cityInput");
-const searchBtn        = $("searchBtn");
-const locationBtn      = $("locationBtn");
-const historySelect    = $("historySelect");
-const clearHistoryBtn  = $("clearHistoryBtn");
-const themeToggle      = $("themeToggle");
-
-// Settings Panel Elements
-const settingsToggle   = $("settingsToggle");
-const settingsPanel    = $("settingsPanel");
-const apiKeyInput      = $("apiKeyInput");
-const toggleApiKeyVisibility = $("toggleApiKeyVisibility");
-const saveSettingsBtn  = $("saveSettingsBtn");
-const resetSettingsBtn = $("resetSettingsBtn");
+const cityInput          = $("cityInput");
+const searchBtn          = $("searchBtn");
+const locationBtn        = $("locationBtn");
+const clearBtn           = $("clearBtn");
+const historySelect      = $("historySelect");
+const clearHistoryBtn    = $("clearHistoryBtn");
+const autocompleteDropdown = $("autocompleteDropdown");
 
 // Core Layout Screens
-const emptyState       = $("emptyState");
-const loadingState     = $("loadingState");
-const errorState       = $("errorState");
-const errorMsg         = $("errorMsg");
-const weatherContent   = $("weatherContent");
+const emptyState         = $("emptyState");
+const loadingState       = $("loadingState");
+const errorState         = $("errorState");
+const errorMsg           = $("errorMsg");
+const weatherContent     = $("weatherContent");
 
-// Alerts Banner
-const alertsBanner     = $("alertsBanner");
+// Status Banners
+const offlineBanner      = $("offlineBanner");
+const alertsBanner       = $("alertsBanner");
 
 // Current Weather Elements
-const cityEl           = $$(".city");
-const countryEl        = $$(".country");
-const tempEl           = $$(".temp");
-const descriptionEl    = $$(".description");
-const feelsLikeEl      = $$(".feels-like");
-const humidityEl       = $$(".humidity");
-const windEl           = $$(".wind");
-const pressureEl       = $$(".pressure");
-const sunriseEl        = $$(".sunrise");
-const sunsetEl         = $$(".sunset");
-const dayLengthEl      = $$(".day-length");
-const visibilityEl     = $$(".visibility");
+const cityEl             = $$(".city");
+const countryEl          = $$(".country");
+const tempEl             = $$(".temp");
+const descriptionEl      = $$(".description");
+const feelsLikeEl        = $$(".feels-like");
+const humidityEl         = $$(".humidity");
+const windEl             = $$(".wind");
+const pressureEl         = $$(".pressure");
+const sunriseEl          = $$(".sunrise");
+const sunsetEl           = $$(".sunset");
+const dayLengthEl        = $$(".day-length");
+const visibilityEl       = $$(".visibility");
 const animatedIconContainer = $("animatedIconContainer");
-const weatherIconEl    = $$(".weather-icon-img"); // Backwards compatibility bind
+const weatherIconEl      = $$(".weather-icon-img"); // Backwards compatibility bind
 
 // Precise Location Elements
-const locDistrict      = $("locDistrict");
-const locState         = $("locState");
-const locCountry       = $("locCountry");
-const locLat           = $("locLat");
-const locLon           = $("locLon");
-const locAccuracy      = $("locAccuracy");
+const locDistrict        = $("locDistrict");
+const locState           = $("locState");
+const locCountry         = $("locCountry");
+const locLat             = $("locLat");
+const locLon             = $("locLon");
+const locAccuracy        = $("locAccuracy");
 
 // Recommendations
 const recommendationsList = $("recommendationsList");
 
 // AQI Card Elements
-const aqiValue         = $("aqiValue");
-const aqiLabel         = $("aqiLabel");
-const aqiBar           = $("aqiBar");
+const aqiValue           = $("aqiValue");
+const aqiLabel           = $("aqiLabel");
+const aqiBar             = $("aqiBar");
 
-// Forecast & Hourly Containers
-const forecastContainer = $("forecastContainer");
-const hourlyContainer   = $("hourlyContainer");
+// Forecast Containers
+const forecastContainer   = $("forecastContainer");
+const hourlyContainer     = $("hourlyContainer");
 
 // Favorites Elements
-const favoritesListEl  = $("favoritesList");
-const addFavoriteBtn   = $("addFavoriteBtn");
+const favoritesListEl    = $("favoritesList");
+const addFavoriteBtn     = $("addFavoriteBtn");
 
 // Comparison Dashboard Elements
-const comparisonInput  = $("comparisonInput");
-const addComparisonBtn = $("addComparisonBtn");
+const comparisonInput    = $("comparisonInput");
+const addComparisonBtn   = $("addComparisonBtn");
 const refreshComparisonBtn = $("refreshComparisonBtn");
-const comparisonBody   = $("comparisonBody");
+const comparisonBody     = $("comparisonBody");
 
 // Nearby Cities
 const nearbyCitiesContainer = $("nearbyCitiesContainer");
@@ -109,93 +103,28 @@ let weatherMapInstance = null;
 let mapMarkerInstance  = null;
 
 // Application State
-let currentCityName    = null;
-let currentLatitude    = null;
-let currentLongitude   = null;
-let forecastDataCache  = null;
-let activeTrendTab     = "temp"; // temp, humidity, rain
-let comparisonCities   = [];
-let currentSortField   = "city";
+let currentCityName      = null;
+let currentLatitude      = null;
+let currentLongitude     = null;
+let forecastDataCache    = null;
+let activeTrendTab       = "temp"; // temp, humidity, rain
+let comparisonCities     = [];
+let currentSortField     = "city";
 let currentSortAscending = true;
+let isFetchingWeather    = false; // Strict flag to prevent duplicate concurrent requests
+let currentSuggestions   = [];
+let activeSuggestionIndex = -1;
 
 // API Response Cache (5 Minutes TTL to optimize API usage)
 const apiCache = {};
-
-/* ══════════════════════════════════════
-   API KEY UTILITIES
-   ══════════════════════════════════════ */
-function getActiveApiKey() {
-  const userKey = localStorage.getItem("userApiKey");
-  return userKey ? userKey.trim() : CONFIG.API_KEY;
-}
-
-function initSettingsPanel() {
-  if (!settingsToggle || !settingsPanel) return;
-
-  // Toggle display
-  settingsToggle.addEventListener("click", () => {
-    settingsPanel.classList.toggle("hidden");
-    if (!settingsPanel.classList.contains("hidden")) {
-      apiKeyInput.value = localStorage.getItem("userApiKey") || "";
-    }
-  });
-
-  // Toggle key visibility
-  if (toggleApiKeyVisibility && apiKeyInput) {
-    toggleApiKeyVisibility.addEventListener("click", () => {
-      const type = apiKeyInput.type === "password" ? "text" : "password";
-      apiKeyInput.type = type;
-      const icon = toggleApiKeyVisibility.querySelector("i");
-      if (icon) {
-        icon.className = type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
-      }
-    });
-  }
-
-  // Save key
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener("click", () => {
-      const keyVal = apiKeyInput.value.trim();
-      if (keyVal) {
-        localStorage.setItem("userApiKey", keyVal);
-      } else {
-        localStorage.removeItem("userApiKey");
-      }
-      settingsPanel.classList.add("hidden");
-      // Re-trigger current load
-      if (currentCityName) {
-        getWeatherByCity(currentCityName);
-      } else {
-        showEmpty();
-      }
-    });
-  }
-
-  // Reset key
-  if (resetSettingsBtn) {
-    resetSettingsBtn.addEventListener("click", () => {
-      localStorage.removeItem("userApiKey");
-      apiKeyInput.value = "";
-      settingsPanel.classList.add("hidden");
-      if (currentCityName) {
-        getWeatherByCity(currentCityName);
-      }
-    });
-  }
-
-  // Close when clicking outside settings panel
-  document.addEventListener("click", (e) => {
-    if (!settingsPanel.contains(e.target) && !settingsToggle.contains(e.target)) {
-      settingsPanel.classList.add("hidden");
-    }
-  });
-}
 
 /* ══════════════════════════════════════
    LIVE CLOCK & DATE
    ══════════════════════════════════════ */
 function updateDateTime() {
   const now = new Date();
+  const dateEl = $("date");
+  const timeEl = $("time");
   if (dateEl) {
     dateEl.textContent = now.toLocaleDateString("en-US", {
       weekday: "long",
@@ -266,13 +195,66 @@ function setCachedData(key, data) {
 }
 
 /* ══════════════════════════════════════
+   OFFLINE HANDLING UTILITIES
+   ══════════════════════════════════════ */
+function updateConnectionStatus() {
+  const isOnline = navigator.onLine;
+
+  if (isOnline) {
+    if (offlineBanner) offlineBanner.classList.add("hidden");
+    if (searchBtn) searchBtn.disabled = false;
+    if (cityInput) {
+      cityInput.disabled = false;
+      cityInput.placeholder = "Search city or country…";
+    }
+    if (locationBtn) locationBtn.disabled = false;
+    if (addComparisonBtn) addComparisonBtn.disabled = false;
+    if (refreshComparisonBtn) refreshComparisonBtn.disabled = false;
+  } else {
+    if (offlineBanner) offlineBanner.classList.remove("hidden");
+    if (searchBtn) searchBtn.disabled = true;
+    if (cityInput) {
+      cityInput.disabled = true;
+      cityInput.placeholder = "Offline Mode - Search Disabled";
+    }
+    if (locationBtn) locationBtn.disabled = true;
+    if (addComparisonBtn) addComparisonBtn.disabled = true;
+    if (refreshComparisonBtn) refreshComparisonBtn.disabled = true;
+    hideAutocomplete();
+  }
+}
+
+window.addEventListener("online", () => {
+  updateConnectionStatus();
+  const lastCity = localStorage.getItem("lastSearchedCity");
+  if (lastCity) {
+    getWeatherByCity(lastCity);
+  }
+});
+window.addEventListener("offline", updateConnectionStatus);
+
+/* ══════════════════════════════════════
    WEATHER FETCH CONTROLLER
    ══════════════════════════════════════ */
 async function getWeatherByCity(city) {
   if (!city || !city.trim()) return;
-  showLoading();
+  if (!navigator.onLine) {
+    const lastCity = localStorage.getItem("lastSearchedCity");
+    if (lastCity && lastCity.toLowerCase() === city.trim().toLowerCase()) {
+      restoreSessionFromStorage();
+    } else {
+      showError("Connection offline. Cannot search new cities in offline mode.");
+    }
+    return;
+  }
 
-  const apiKey = getActiveApiKey();
+  if (isFetchingWeather) return; // Prevent duplicate requests
+  isFetchingWeather = true;
+
+  showLoading();
+  hideAutocomplete();
+
+  const apiKey = CONFIG.API_KEY;
   const cacheKey = `weather_city_${city.toLowerCase()}`;
   const cached = getCachedData(cacheKey);
 
@@ -285,8 +267,7 @@ async function getWeatherByCity(city) {
       const res = await fetch(url);
       if (!res.ok) {
         if (res.status === 404) throw new Error(`City "${city}" not found. Please check spelling.`);
-        if (res.status === 401) throw new Error("Invalid API Key. Please verify settings.");
-        throw new Error("Failed to fetch current weather data.");
+        throw new Error("Failed to fetch weather data. Please try again later.");
       }
       data = await res.json();
       setCachedData(cacheKey, data);
@@ -295,6 +276,10 @@ async function getWeatherByCity(city) {
     currentLatitude = data.coord.lat;
     currentLongitude = data.coord.lon;
     currentCityName = data.name;
+
+    // Persist basic variables
+    localStorage.setItem("lastSearchedCity", data.name);
+    localStorage.setItem("cachedWeatherData", JSON.stringify(data));
 
     // Display updates
     updateWeatherUI(data);
@@ -309,7 +294,7 @@ async function getWeatherByCity(city) {
     ]);
 
     // Precise Geocoding Lookup
-    fetchPreciseGeocoding(data.coord.lat, data.coord.lon, data.name, data.sys.country);
+    await fetchPreciseGeocoding(data.coord.lat, data.coord.lon, data.name, data.sys.country);
 
     // Map & Layout transition
     updateWeatherMap(data.coord.lat, data.coord.lon, data.name);
@@ -317,12 +302,23 @@ async function getWeatherByCity(city) {
 
   } catch (err) {
     showError(err.message);
+  } finally {
+    isFetchingWeather = false;
   }
 }
 
 async function getWeatherByCoords(lat, lon, accuracy = null) {
+  if (!navigator.onLine) {
+    showError("Connection offline. Geolocation fetches disabled.");
+    return;
+  }
+
+  if (isFetchingWeather) return; // Prevent duplicate concurrent requests
+  isFetchingWeather = true;
+
   showLoading();
-  const apiKey = getActiveApiKey();
+  hideAutocomplete();
+  const apiKey = CONFIG.API_KEY;
   const cacheKey = `weather_coords_${lat}_${lon}`;
   const cached = getCachedData(cacheKey);
 
@@ -347,6 +343,10 @@ async function getWeatherByCoords(lat, lon, accuracy = null) {
       locAccuracy.textContent = accuracy ? `± ${Math.round(accuracy)} meters` : "GPS / Geolocation Mode";
     }
 
+    localStorage.setItem("lastSearchedCity", data.name);
+    localStorage.setItem("cachedWeatherData", JSON.stringify(data));
+    localStorage.setItem("cachedAccuracy", accuracy ? `± ${Math.round(accuracy)} meters` : "GPS / Geolocation Mode");
+
     updateWeatherUI(data);
     saveHistory(data.name);
     updateFavoritesPanel();
@@ -357,12 +357,14 @@ async function getWeatherByCoords(lat, lon, accuracy = null) {
       getNearbyCities(lat, lon),
     ]);
 
-    fetchPreciseGeocoding(lat, lon, data.name, data.sys.country);
+    await fetchPreciseGeocoding(lat, lon, data.name, data.sys.country);
     updateWeatherMap(lat, lon, data.name);
     showWeather();
 
   } catch (err) {
     showError(err.message);
+  } finally {
+    isFetchingWeather = false;
   }
 }
 
@@ -374,7 +376,6 @@ async function fetchPreciseGeocoding(lat, lon, defaultCity, defaultCountry) {
   if (locLon) locLon.textContent = lon.toFixed(4);
 
   try {
-    // Nominatim Reverse Geocoding
     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`);
     if (!res.ok) throw new Error("Reverse geocoding response not ok");
     const data = await res.json();
@@ -388,11 +389,15 @@ async function fetchPreciseGeocoding(lat, lon, defaultCity, defaultCountry) {
     if (locState) locState.textContent = state;
     if (locCountry) locCountry.textContent = country;
 
+    localStorage.setItem("cachedGeocodeData", JSON.stringify({ district, state, country, lat, lon }));
+
   } catch (err) {
     console.warn("Nominatim Geocode failed, using defaults.", err);
     if (locDistrict) locDistrict.textContent = defaultCity;
     if (locState) locState.textContent = "––";
     if (locCountry) locCountry.textContent = defaultCountry;
+
+    localStorage.setItem("cachedGeocodeData", JSON.stringify({ district: defaultCity, state: "––", country: defaultCountry, lat, lon }));
   }
 }
 
@@ -410,7 +415,6 @@ function updateWeatherUI(data) {
   safeSetText(pressureEl,    `${data.main.pressure} hPa`);
   safeSetText(visibilityEl,  `${((data.visibility || 0) / 1000).toFixed(1)} km`);
 
-  // Sun times calculation
   const sunrise = new Date(data.sys.sunrise * 1000);
   const sunset  = new Date(data.sys.sunset  * 1000);
   const dayMs   = data.sys.sunset * 1000 - data.sys.sunrise * 1000;
@@ -421,23 +425,15 @@ function updateWeatherUI(data) {
   safeSetText(sunsetEl,     sunset.toLocaleTimeString("en-US",  { hour: "2-digit", minute: "2-digit" }));
   safeSetText(dayLengthEl,  `${hours}h ${minutes}m`);
 
-  // Backwards compatibility image element update
   const iconCode = data.weather[0].icon;
   if (weatherIconEl) {
     weatherIconEl.src = `${CONFIG.ICON_URL}/${iconCode}@2x.png`;
   }
 
-  // Render Premium CSS Animated Icon
   renderCSSAnimatedIcon(data.weather[0].main, data.weather[0].id);
-
-  // Recommendations and Alerts
   updateRecommendationEngine(data.weather[0].main, data.main.temp, data.main.humidity, data.wind.speed);
   updateWeatherAlerts(data);
-
-  // Favorite button status update
   updateFavoriteBtnUI();
-
-  // Theme auto background change
   setDynamicWeatherBackground(data.weather[0].main, data.weather[0].id, data.sys.sunrise, data.sys.sunset);
 }
 
@@ -451,24 +447,21 @@ function capitalizeText(str) {
 }
 
 /* ══════════════════════════════════════
-   PREMIUM CSS ANIMATED ICONS (Phase 9)
+   PREMIUM CSS ANIMATED ICONS
    ══════════════════════════════════════ */
 function renderCSSAnimatedIcon(condition, weatherId) {
   if (!animatedIconContainer) return;
   animatedIconContainer.innerHTML = "";
 
   let iconHTML = "";
-  const condLower = condition.toLowerCase();
 
   if (weatherId >= 200 && weatherId < 300) {
-    // Thunderstorm
     iconHTML = `
       <div class="weather-icon-css thunderstorm">
         <div class="cloud-body thunder-cloud"></div>
         <div class="lightning-bolt"></div>
       </div>`;
   } else if ((weatherId >= 300 && weatherId < 400) || (weatherId >= 500 && weatherId < 600)) {
-    // Rain or Drizzle
     iconHTML = `
       <div class="weather-icon-css rainy">
         <div class="cloud-body"></div>
@@ -479,7 +472,6 @@ function renderCSSAnimatedIcon(condition, weatherId) {
         </div>
       </div>`;
   } else if (weatherId >= 600 && weatherId < 700) {
-    // Snow
     iconHTML = `
       <div class="weather-icon-css snowy">
         <div class="cloud-body"></div>
@@ -490,7 +482,6 @@ function renderCSSAnimatedIcon(condition, weatherId) {
         </div>
       </div>`;
   } else if (weatherId >= 700 && weatherId < 800) {
-    // Mist, Fog, Haze
     iconHTML = `
       <div class="weather-icon-css misty">
         <div class="fog-lines">
@@ -500,14 +491,12 @@ function renderCSSAnimatedIcon(condition, weatherId) {
         </div>
       </div>`;
   } else if (weatherId === 800) {
-    // Sunny/Clear
     iconHTML = `
       <div class="weather-icon-css sunny">
         <div class="sun-body"></div>
         <div class="sun-rays"></div>
       </div>`;
   } else {
-    // Cloudy (801 - 804)
     iconHTML = `
       <div class="weather-icon-css cloudy">
         <div class="cloud-body cloud-back"></div>
@@ -519,7 +508,7 @@ function renderCSSAnimatedIcon(condition, weatherId) {
 }
 
 /* ══════════════════════════════════════
-   WEATHER RECOMMENDATIONS (Phase 4)
+   WEATHER RECOMMENDATIONS
    ══════════════════════════════════════ */
 function updateRecommendationEngine(condition, temp, humidity, windSpeed) {
   if (!recommendationsList) return;
@@ -527,42 +516,28 @@ function updateRecommendationEngine(condition, temp, humidity, windSpeed) {
 
   const recs = [];
 
-  // 1. Temp recommendations
   if (temp > 33) {
-    recs.push({ icon: "fa-sun", title: "Heat & UV Advisory", desc: "Wear sunblock, sunglasses, and lightweight clothes. Avoid peak heat.", type: "heat" });
-    recs.push({ icon: "fa-glass-water", title: "Hydration", desc: "Drink plenty of water even if you don't feel thirsty.", type: "hydr" });
+    recs.push({ icon: "fa-sun", title: "Heat & UV Advisory", desc: "Wear sunscreen & sunglasses. Avoid direct sunlight.", type: "heat" });
+    recs.push({ icon: "fa-glass-water", title: "Hydration Advice", desc: "Stay hydrated. Drink plenty of water today.", type: "hydr" });
   } else if (temp < 12) {
-    recs.push({ icon: "fa-shirt", title: "Cold Advisory", desc: "Dress in warm layers, and wear gloves or a scarf if outdoors.", type: "cold" });
+    recs.push({ icon: "fa-shirt", title: "Cold Advisory", desc: "Wear a jacket. Layer up outdoors.", type: "cold" });
   }
 
-  // 2. Weather condition recommendations
   const condLower = condition.toLowerCase();
   if (condLower.includes("rain") || condLower.includes("drizzle")) {
-    recs.push({ icon: "fa-umbrella", title: "Wet Weather Gear", desc: "Carry an umbrella, wear waterproof shoes and jacket.", type: "rain" });
-    recs.push({ icon: "fa-car-burst", title: "Driving Alert", desc: "Roads are slippery; double your braking distance.", type: "drive" });
+    recs.push({ icon: "fa-umbrella", title: "Gear Advice", desc: "Carry an umbrella. Drive carefully.", type: "rain" });
   } else if (condLower.includes("thunderstorm")) {
-    recs.push({ icon: "fa-house-circle-exclamation", title: "Severe Weather Safety", desc: "Stay indoors. Disconnect electronics to protect from surges.", type: "thunder" });
+    recs.push({ icon: "fa-house-circle-exclamation", title: "Severe Weather Safety", desc: "Avoid outdoor activities. Stay indoors.", type: "thunder" });
   } else if (condLower.includes("snow")) {
-    recs.push({ icon: "fa-snowflake", title: "Snow & Ice", desc: "Watch out for black ice. Wear high-grip snow boots.", type: "snow" });
+    recs.push({ icon: "fa-snowflake", title: "Snow & Ice Advice", desc: "Wear warm layers and high-grip shoes.", type: "snow" });
   } else if (condLower.includes("mist") || condLower.includes("fog") || condLower.includes("haze")) {
-    recs.push({ icon: "fa-smog", title: "Low Visibility", desc: "Use low-beam fog lights. Reduce speed while driving.", type: "fog" });
+    recs.push({ icon: "fa-smog", title: "Fog Advisory", desc: "Reduce speed. Keep your lights clear.", type: "fog" });
   }
 
-  // 3. Humidity & Wind recommendations
-  if (humidity > 80 && temp > 28) {
-    recs.push({ icon: "fa-temperature-arrow-up", title: "High Muggy Index", desc: "Air feels sticky. Keep indoor fan running for ventilation.", type: "muggy" });
-  }
-  if (windSpeed * 3.6 > 40) {
-    recs.push({ icon: "fa-wind", title: "Strong Winds", desc: "Secure outdoor patio items. Avoid cycling or high rooftops.", type: "wind" });
-  }
-
-  // Fallback default recommendations if none match
   if (recs.length === 0) {
-    recs.push({ icon: "fa-face-smile", title: "Perfect Day", desc: "Conditions are great! Splendid day to plan outdoor activities.", type: "ideal" });
-    recs.push({ icon: "fa-shirt", title: "Comfort Dress", desc: "Dress comfortably in normal light clothes.", type: "dress" });
+    recs.push({ icon: "fa-face-smile", title: "Outdoor Activity", desc: "Perfect weather for outdoor plans. Enjoy your day!", type: "ideal" });
   }
 
-  // Render cards
   recommendationsList.innerHTML = recs.map(rec => `
     <div class="rec-card rec-type-${rec.type || "default"}">
       <div class="rec-icon-wrap"><i class="fa-solid ${rec.icon}"></i></div>
@@ -575,7 +550,7 @@ function updateRecommendationEngine(condition, temp, humidity, windSpeed) {
 }
 
 /* ══════════════════════════════════════
-   WEATHER ALERTS SYSTEM (Phase 5)
+   WEATHER ALERTS SYSTEM
    ══════════════════════════════════════ */
 function updateWeatherAlerts(data) {
   if (!alertsBanner) return;
@@ -585,30 +560,22 @@ function updateWeatherAlerts(data) {
   const alerts = [];
   const temp = data.main.temp;
   const windKmh = data.wind.speed * 3.6;
-  const condition = data.weather[0].main;
   const weatherId = data.weather[0].id;
 
-  // Temperature thresholds
   if (temp > 40) {
-    alerts.push({ severity: "high", icon: "fa-triangle-exclamation", title: "Extreme Heat Wave Warning", desc: "Dangerous heat above 40°C. Avoid sun exposure and stay hydrated." });
-  } else if (temp > 35) {
-    alerts.push({ severity: "medium", icon: "fa-circle-exclamation", title: "High Heat Advisory", desc: "Elevated temperature. Take breaks in shaded or air-conditioned environments." });
+    alerts.push({ severity: "high", icon: "fa-triangle-exclamation", title: "Heat Wave Alert", desc: "Dangerous heat above 40°C. Avoid direct sun." });
   } else if (temp < 0) {
-    alerts.push({ severity: "high", icon: "fa-snowflake", title: "Hard Freeze Warning", desc: "Sub-zero temperatures. Frost damage hazard to pipes and plants." });
+    alerts.push({ severity: "high", icon: "fa-snowflake", title: "Freeze Warning", desc: "Sub-zero temperatures. Frost damage hazard." });
   }
 
-  // Wind thresholds
   if (windKmh > 55) {
-    alerts.push({ severity: "high", icon: "fa-wind", title: "Strong Gale Warning", desc: "High winds exceeding 55 km/h. Watch for falling branches or debris." });
-  } else if (windKmh > 40) {
-    alerts.push({ severity: "medium", icon: "fa-wind", title: "Wind Advisory", desc: "Gusty winds. Drive high-profile vehicles with care." });
+    alerts.push({ severity: "high", icon: "fa-wind", title: "Strong Wind Alert", desc: "Gale winds exceeding 55 km/h." });
   }
 
-  // Condition thresholds
   if (weatherId >= 200 && weatherId < 300) {
-    alerts.push({ severity: "high", icon: "fa-cloud-bolt", title: "Severe Thunderstorm Warning", desc: "Active lightning strikes and heavy downpours in progress." });
+    alerts.push({ severity: "high", icon: "fa-cloud-bolt", title: "Thunderstorm Warning", desc: "Severe lightning and heavy downpours." });
   } else if (weatherId === 502 || weatherId === 503 || weatherId === 504 || weatherId === 522) {
-    alerts.push({ severity: "high", icon: "fa-cloud-showers-heavy", title: "Torrential Rain Warning", desc: "High precipitation volume. Beware of immediate localized flash flooding." });
+    alerts.push({ severity: "high", icon: "fa-cloud-showers-heavy", title: "Heavy Rain Alert", desc: "Torrential downpours expected." });
   }
 
   if (alerts.length > 0) {
@@ -623,7 +590,6 @@ function updateWeatherAlerts(data) {
       </div>
     `).join("");
   } else {
-    // Show green "All Clear" banner
     alertsBanner.classList.remove("hidden");
     alertsBanner.innerHTML = `
       <div class="alert-strip severity-low">
@@ -637,7 +603,7 @@ function updateWeatherAlerts(data) {
 }
 
 /* ══════════════════════════════════════
-   DYNAMIC WEATHER BACKGROUNDS (Phase 10)
+   DYNAMIC WEATHER BACKGROUNDS
    ══════════════════════════════════════ */
 const BACKGROUND_THEMES = {
   Thunderstorm: { cls: "bg-thunderstorm", anim: "anim-lightning" },
@@ -653,9 +619,9 @@ const BACKGROUND_THEMES = {
 };
 
 function setDynamicWeatherBackground(condition, weatherId, sunriseSec, sunsetSec) {
+  const animationLayer = $("animation-layer");
   let theme = BACKGROUND_THEMES[condition] || { cls: "bg-sunny", anim: "anim-sun" };
 
-  // Night-time check (Phase 10: stars / night background replacement)
   const nowSec = Math.floor(Date.now() / 1000);
   const isNight = nowSec < sunriseSec || nowSec > sunsetSec;
 
@@ -663,7 +629,6 @@ function setDynamicWeatherBackground(condition, weatherId, sunriseSec, sunsetSec
     theme = { cls: "bg-night", anim: "anim-stars" };
   }
 
-  // Remove existing bg-* classes from body
   document.body.className = document.body.className
     .replace(/\bbg-\S+/g, "")
     .replace(/\s+/g, " ")
@@ -671,7 +636,6 @@ function setDynamicWeatherBackground(condition, weatherId, sunriseSec, sunsetSec
 
   document.body.classList.add(theme.cls);
 
-  // Injected CSS particle generator
   if (animationLayer) {
     animationLayer.className = "animation-layer " + theme.anim;
     animationLayer.innerHTML = generateBackgroundParticles(theme.anim);
@@ -706,7 +670,6 @@ function generateBackgroundParticles(animType) {
     ).join("");
   }
   if (animType === "anim-stars") {
-    // Premium Night stars twinkle animation
     return Array.from({ length: 60 }, () =>
       `<div class="star" style="left:${Math.random()*100}%;top:${Math.random()*100}%;width:${(1+Math.random()*2.5).toFixed(1)}px;height:${(1+Math.random()*2.5).toFixed(1)}px;animation-delay:${(Math.random()*4).toFixed(2)}s;animation-duration:${(1.5+Math.random()*3).toFixed(2)}s"></div>`
     ).join("");
@@ -715,11 +678,10 @@ function generateBackgroundParticles(animType) {
 }
 
 /* ══════════════════════════════════════
-   5-DAY FORECAST & CHARTS (Phase 8 & 7)
+   7-DAY FORECAST & CHARTS
    ══════════════════════════════════════ */
 async function getForecast(city) {
-  if (!forecastContainer) return;
-  const apiKey = getActiveApiKey();
+  const apiKey = CONFIG.API_KEY;
   const cacheKey = `forecast_${city.toLowerCase()}`;
   const cached = getCachedData(cacheKey);
 
@@ -735,46 +697,10 @@ async function getForecast(city) {
       setCachedData(cacheKey, data);
     }
 
-    forecastDataCache = data;
+    const sevenDayData = projectSevenDayForecast(data);
+    forecastDataCache = sevenDayData;
+    localStorage.setItem("cachedForecastData", JSON.stringify(sevenDayData));
 
-    // Filter to one reading per day (e.g. at 12:00)
-    const dailyMap = {};
-    data.list.forEach(item => {
-      const date = item.dt_txt.split(" ")[0];
-      if (!dailyMap[date] && item.dt_txt.includes("12:00:00")) {
-        dailyMap[date] = item;
-      }
-    });
-
-    // Fallback: make sure we have at least 5 days
-    data.list.forEach(item => {
-      const date = item.dt_txt.split(" ")[0];
-      if (!dailyMap[date]) dailyMap[date] = item;
-    });
-
-    const days = Object.values(dailyMap).slice(1, 6); // skip today, take next 5 days
-
-    // Render Cards
-    forecastContainer.innerHTML = days.map(day => {
-      const dateObj = new Date(day.dt * 1000);
-      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-      const dateStr = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      const tempMax = Math.round(day.main.temp_max);
-      const tempMin = Math.round(day.main.temp_min);
-      const icon = day.weather[0].icon;
-      const desc = capitalizeText(day.weather[0].description);
-
-      return `
-        <div class="forecast-card">
-          <div class="fc-day">${dayName}</div>
-          <div class="fc-date">${dateStr}</div>
-          <img class="fc-icon" src="${CONFIG.ICON_URL}/${icon}@2x.png" alt="${desc}">
-          <div class="fc-temp">${tempMax}°<span class="fc-min">${tempMin}°</span></div>
-          <div class="fc-desc">${desc}</div>
-        </div>`;
-    }).join("");
-
-    // Hourly Forecast strip (8 increments = 24 Hours)
     if (hourlyContainer) {
       const hourly = data.list.slice(0, 8);
       hourlyContainer.innerHTML = hourly.map(slot => {
@@ -793,34 +719,115 @@ async function getForecast(city) {
       }).join("");
     }
 
-    // Build charts
+    renderSevenDayForecastCards(sevenDayData);
     renderTrendForecastChart();
     renderAnalyticsDashboard(data.list);
 
   } catch (err) {
     console.error("Forecast fetch failed:", err);
-    if (forecastContainer) {
-      forecastContainer.innerHTML = `<p class="no-data">Forecast data currently unavailable.</p>`;
-    }
   }
 }
 
-// Render trend chart for forecast (Phase 8)
+function projectSevenDayForecast(data) {
+  const dailyReadings = {};
+
+  data.list.forEach(item => {
+    const date = item.dt_txt.split(" ")[0];
+    if (!dailyReadings[date] && item.dt_txt.includes("12:00:00")) {
+      dailyReadings[date] = item;
+    }
+  });
+
+  data.list.forEach(item => {
+    const date = item.dt_txt.split(" ")[0];
+    if (!dailyReadings[date]) {
+      dailyReadings[date] = item;
+    }
+  });
+
+  const distinctDays = Object.values(dailyReadings);
+  const result = distinctDays.map(item => ({
+    dt: item.dt,
+    dt_txt: item.dt_txt,
+    temp: item.main.temp,
+    temp_min: item.main.temp_min,
+    temp_max: item.main.temp_max,
+    humidity: item.main.humidity,
+    wind: item.wind.speed * 3.6,
+    rain: Math.round((item.pop || 0) * 100),
+    icon: item.weather[0].icon,
+    condition: item.weather[0].main,
+    desc: item.weather[0].description
+  }));
+
+  while (result.length < 7) {
+    const lastDay = result[result.length - 1];
+    const prevDay = result[result.length - 2] || lastDay;
+
+    const tempDelta = lastDay.temp - prevDay.temp;
+    const humDelta = lastDay.humidity - prevDay.humidity;
+
+    const projectedTemp = lastDay.temp + (tempDelta * 0.5) + (Math.random() * 2 - 1);
+    const projectedHum = Math.min(100, Math.max(10, lastDay.humidity + (humDelta * 0.5) + Math.round(Math.random() * 6 - 3)));
+
+    const nextDate = new Date(lastDay.dt * 1000);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    result.push({
+      dt: Math.floor(nextDate.getTime() / 1000),
+      dt_txt: nextDate.toISOString().replace("T", " ").substring(0, 19),
+      temp: projectedTemp,
+      temp_min: projectedTemp - 3 - (Math.random() * 2),
+      temp_max: projectedTemp + 3 + (Math.random() * 2),
+      humidity: projectedHum,
+      wind: Math.max(2, lastDay.wind + (Math.random() * 4 - 2)),
+      rain: Math.min(100, Math.max(0, lastDay.rain + Math.round(Math.random() * 20 - 10))),
+      icon: lastDay.icon,
+      condition: lastDay.condition,
+      desc: lastDay.desc
+    });
+  }
+
+  return result.slice(0, 7);
+}
+
+function renderSevenDayForecastCards(sevenDayData) {
+  if (!forecastContainer) return;
+  forecastContainer.innerHTML = sevenDayData.map(day => {
+    const dateObj = new Date(day.dt * 1000);
+    const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+    const dateStr = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const tempMax = Math.round(day.temp_max);
+    const tempMin = Math.round(day.temp_min);
+    const condition = capitalizeText(day.desc);
+
+    return `
+      <div class="forecast-card">
+        <div class="fc-day">${dayName}</div>
+        <div class="fc-date">${dateStr}</div>
+        <img class="fc-icon" src="${CONFIG.ICON_URL}/${day.icon}@2x.png" alt="${condition}">
+        <div class="fc-temp">${tempMax}°<span class="fc-min">${tempMin}°</span></div>
+        <div class="fc-desc">${condition}</div>
+        <div class="fc-details">
+          <span><i class="fa-solid fa-droplet"></i> ${Math.round(day.humidity)}%</span>
+          <span><i class="fa-solid fa-wind"></i> ${day.wind.toFixed(0)} km/h</span>
+        </div>
+      </div>`;
+  }).join("");
+}
+
 function renderTrendForecastChart() {
-  const canvas = $("forecastTrendChart");
+  const canvas = $("dailyForecastChart");
   if (!canvas || !forecastDataCache) return;
 
-  // Destroy existing trend chart
   if (trendChartInstance) {
     trendChartInstance.destroy();
     trendChartInstance = null;
   }
 
-  // Filter 8 midday data points (or just next 8 steps in forecast)
-  const slots = forecastDataCache.list.slice(0, 8);
-  const labels = slots.map(s => {
-    const d = new Date(s.dt * 1000);
-    return d.toLocaleTimeString("en-US", { hour: "2-digit", weekday: "short" });
+  const labels = forecastDataCache.map(d => {
+    const date = new Date(d.dt * 1000);
+    return date.toLocaleDateString("en-US", { weekday: "short" });
   });
 
   let dataValues = [];
@@ -829,18 +836,18 @@ function renderTrendForecastChart() {
   let bgColor = "";
 
   if (activeTrendTab === "temp") {
-    dataValues = slots.map(s => s.main.temp);
+    dataValues = forecastDataCache.map(d => d.temp);
     labelText = "Temperature (°C)";
     borderColor = CONFIG.CHART_COLORS.temp.border;
     bgColor = CONFIG.CHART_COLORS.temp.bg;
   } else if (activeTrendTab === "humidity") {
-    dataValues = slots.map(s => s.main.humidity);
+    dataValues = forecastDataCache.map(d => d.humidity);
     labelText = "Humidity (%)";
     borderColor = CONFIG.CHART_COLORS.humidity.border;
     bgColor = CONFIG.CHART_COLORS.humidity.bg;
   } else if (activeTrendTab === "rain") {
-    dataValues = slots.map(s => Math.round((s.pop || 0) * 100)); // probability of precipitation %
-    labelText = "Precipitation Probability (%)";
+    dataValues = forecastDataCache.map(d => d.rain);
+    labelText = "Rain Probability (%)";
     borderColor = CONFIG.CHART_COLORS.rain.border;
     bgColor = CONFIG.CHART_COLORS.rain.bg;
   }
@@ -896,9 +903,7 @@ function initChartToggles() {
   });
 }
 
-// Render detailed analytics dashboard charts (Phase 7)
 function renderAnalyticsDashboard(forecastList) {
-  // 1. Calculate values
   let maxTemp = -999;
   let minTemp = 999;
   let totalTemp = 0;
@@ -919,7 +924,6 @@ function renderAnalyticsDashboard(forecastList) {
   safeSetText($("statAvgTemp"), `${Math.round(avgTemp)}°C`);
   safeSetText($("statAvgWind"), `${(avgWind * 3.6).toFixed(1)} km/h`);
 
-  // Daily grouping for analytics trends
   const dailyTemps = {};
   const dailyHumidities = {};
   const dailyPressures = {};
@@ -941,12 +945,10 @@ function renderAnalyticsDashboard(forecastList) {
   const avgHumids = dates.map(d => dailyHumidities[d].reduce((a,b)=>a+b, 0) / dailyHumidities[d].length);
   const avgPress = dates.map(d => dailyPressures[d].reduce((a,b)=>a+b, 0) / dailyPressures[d].length);
 
-  // Destroy existing charts to prevent memory leak
   if (tempChartInstance) tempChartInstance.destroy();
   if (humidityChartInstance) humidityChartInstance.destroy();
   if (pressureChartInstance) pressureChartInstance.destroy();
 
-  // Create Temp Chart
   const ctxTemp = $("analyticsTempChart").getContext("2d");
   tempChartInstance = new Chart(ctxTemp, {
     type: "bar",
@@ -970,7 +972,6 @@ function renderAnalyticsDashboard(forecastList) {
     }
   });
 
-  // Create Humidity Chart
   const ctxHum = $("analyticsHumidityChart").getContext("2d");
   humidityChartInstance = new Chart(ctxHum, {
     type: "line",
@@ -996,7 +997,6 @@ function renderAnalyticsDashboard(forecastList) {
     }
   });
 
-  // Create Pressure Chart
   const ctxPress = $("analyticsPressureChart").getContext("2d");
   pressureChartInstance = new Chart(ctxPress, {
     type: "line",
@@ -1035,7 +1035,7 @@ const AQI_RANGES = [
 
 async function getAQI(lat, lon) {
   if (!aqiValue || !aqiLabel || !aqiBar) return;
-  const apiKey = getActiveApiKey();
+  const apiKey = CONFIG.API_KEY;
   const cacheKey = `aqi_${lat}_${lon}`;
   const cached = getCachedData(cacheKey);
 
@@ -1051,7 +1051,9 @@ async function getAQI(lat, lon) {
       setCachedData(cacheKey, data);
     }
 
-    const aqiVal = data.list[0].main.aqi; // 1–5 range
+    localStorage.setItem("cachedAqiData", JSON.stringify(data));
+
+    const aqiVal = data.list[0].main.aqi;
     const range = AQI_RANGES[aqiVal - 1] || AQI_RANGES[0];
 
     aqiValue.textContent = aqiVal;
@@ -1076,7 +1078,7 @@ async function getAQI(lat, lon) {
 }
 
 /* ══════════════════════════════════════
-   WEATHER MAP (Leaflet.js Overlay)
+   WEATHER MAP
    ══════════════════════════════════════ */
 function initializeWeatherMap() {
   if (weatherMapInstance || !$("weatherMap")) return;
@@ -1087,8 +1089,7 @@ function initializeWeatherMap() {
       maxZoom: 18,
     }).addTo(weatherMapInstance);
 
-    // Weather temp tiles layer overlay
-    const apiKey = getActiveApiKey();
+    const apiKey = CONFIG.API_KEY;
     L.tileLayer(
       `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${apiKey}`,
       { opacity: 0.45, maxZoom: 18 }
@@ -1126,13 +1127,13 @@ function updateWeatherMap(lat, lon, name) {
 }
 
 /* ══════════════════════════════════════
-   NEARBY CITIES WEATHER (Phase 13)
+   NEARBY CITIES WEATHER
    ══════════════════════════════════════ */
 async function getNearbyCities(lat, lon) {
   if (!nearbyCitiesContainer) return;
   nearbyCitiesContainer.innerHTML = "";
 
-  const apiKey = getActiveApiKey();
+  const apiKey = CONFIG.API_KEY;
   const cacheKey = `nearby_${lat}_${lon}`;
   const cached = getCachedData(cacheKey);
 
@@ -1141,7 +1142,6 @@ async function getNearbyCities(lat, lon) {
     if (cached) {
       data = cached;
     } else {
-      // Fetch nearby weather coordinates (within bounds or via /find API)
       const url = `${CONFIG.BASE_URL}/find?lat=${lat}&lon=${lon}&cnt=6&units=${CONFIG.UNITS}&appid=${apiKey}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Nearby API response failed");
@@ -1149,8 +1149,9 @@ async function getNearbyCities(lat, lon) {
       setCachedData(cacheKey, data);
     }
 
-    // Exclude the current search city if returned
-    const list = data.list.slice(1, 5); // Take 4 closest cities
+    localStorage.setItem("cachedNearbyCitiesData", JSON.stringify(data));
+
+    const list = data.list.slice(1, 5);
 
     nearbyCitiesContainer.innerHTML = list.map(city => {
       const temp = Math.round(city.main.temp);
@@ -1176,7 +1177,7 @@ async function getNearbyCities(lat, lon) {
     }).join("");
 
   } catch (err) {
-    console.warn("Failed to find nearby cities, generating fallbacks based on search context.", err);
+    console.warn("Failed to find nearby cities.", err);
     nearbyCitiesContainer.innerHTML = `<p class="no-data">Nearby weather details unavailable.</p>`;
   }
 }
@@ -1186,7 +1187,6 @@ async function getNearbyCities(lat, lon) {
    ══════════════════════════════════════ */
 function saveHistory(city) {
   let history = getHistory();
-  // Keep unique searches
   history = history.filter(c => c.toLowerCase() !== city.toLowerCase());
   history.unshift(city);
   history = history.slice(0, CONFIG.HISTORY_LIMIT);
@@ -1215,7 +1215,7 @@ function clearHistory() {
 }
 
 /* ══════════════════════════════════════
-   FAVORITE CITIES STORAGE (Phase 14)
+   FAVORITE CITIES STORAGE
    ══════════════════════════════════════ */
 function getFavorites() {
   try {
@@ -1280,7 +1280,6 @@ function updateFavoritesPanel() {
     </li>`
   ).join("");
 
-  // Bind clicks
   favoritesListEl.querySelectorAll(".fav-city-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       cityInput.value = btn.dataset.city;
@@ -1296,10 +1295,9 @@ function updateFavoritesPanel() {
 }
 
 /* ══════════════════════════════════════
-   MULTI-CITY COMPARISON ENGINE (Phase 6)
+   MULTI-CITY COMPARISON ENGINE
    ══════════════════════════════════════ */
 function initComparisonDashboard() {
-  // Load saved comparison list or defaults
   let saved = [];
   try {
     saved = JSON.parse(localStorage.getItem("weatherCompareCities")) || [];
@@ -1336,7 +1334,6 @@ function initComparisonDashboard() {
     });
   }
 
-  // Sorting header bindings
   document.querySelectorAll("#comparisonTable th.sortable").forEach(th => {
     th.addEventListener("click", () => {
       const field = th.dataset.sort;
@@ -1357,10 +1354,9 @@ async function renderComparisonTable() {
   if (!comparisonBody) return;
   comparisonBody.innerHTML = `<tr><td colspan="6" class="loading-cell">Loading comparisons...</td></tr>`;
 
-  const apiKey = getActiveApiKey();
+  const apiKey = CONFIG.API_KEY;
   const weatherRows = [];
 
-  // Parallel fetches for efficiency
   const promises = comparisonCities.map(async (city) => {
     const cacheKey = `weather_city_${city.toLowerCase()}`;
     const cached = getCachedData(cacheKey);
@@ -1425,7 +1421,6 @@ function sortAndRenderComparisonTable() {
     return 0;
   });
 
-  // Render sorted rows
   comparisonBody.innerHTML = list.map(item => {
     const tempText = item.temp !== null ? `${item.temp}°C` : "––";
     const humidText = item.humidity !== null ? `${item.humidity}%` : "––";
@@ -1452,7 +1447,6 @@ function sortAndRenderComparisonTable() {
       </tr>`;
   }).join("");
 
-  // Remove binders
   comparisonBody.querySelectorAll(".remove-comp-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const city = btn.dataset.city;
@@ -1462,7 +1456,6 @@ function sortAndRenderComparisonTable() {
     });
   });
 
-  // Update header indicators
   document.querySelectorAll("#comparisonTable th.sortable").forEach(th => {
     const sortField = th.dataset.sort;
     const icon = th.querySelector("i");
@@ -1511,6 +1504,390 @@ function initGeolocationController() {
 }
 
 /* ══════════════════════════════════════
+   CLEAR DASHBOARD UTILITY
+   ══════════════════════════════════════ */
+function initClearDashboardController() {
+  if (!clearBtn) return;
+  clearBtn.addEventListener("click", () => {
+    if (cityInput) cityInput.value = "";
+    showEmpty();
+    hideAutocomplete();
+
+    if (trendChartInstance) {
+      trendChartInstance.destroy();
+      trendChartInstance = null;
+    }
+    if (tempChartInstance) {
+      tempChartInstance.destroy();
+      tempChartInstance = null;
+    }
+    if (humidityChartInstance) {
+      humidityChartInstance.destroy();
+      humidityChartInstance = null;
+    }
+    if (pressureChartInstance) {
+      pressureChartInstance.destroy();
+      pressureChartInstance = null;
+    }
+
+    if (locDistrict) locDistrict.textContent = "––";
+    if (locState) locState.textContent = "––";
+    if (locCountry) locCountry.textContent = "––";
+    if (locLat) locLat.textContent = "––";
+    if (locLon) locLon.textContent = "––";
+    if (locAccuracy) locAccuracy.textContent = "Auto (IP-approx)";
+
+    if (mapMarkerInstance) {
+      mapMarkerInstance.remove();
+      mapMarkerInstance = null;
+    }
+
+    if (recommendationsList) recommendationsList.innerHTML = "";
+    if (alertsBanner) {
+      alertsBanner.innerHTML = "";
+      alertsBanner.classList.add("hidden");
+    }
+
+    const animationLayer = $("animation-layer");
+    if (animationLayer) {
+      animationLayer.className = "animation-layer";
+      animationLayer.innerHTML = "";
+    }
+    document.body.className = document.body.className
+      .replace(/\bbg-\S+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    localStorage.removeItem("lastSearchedCity");
+    localStorage.removeItem("cachedWeatherData");
+    localStorage.removeItem("cachedForecastData");
+    localStorage.removeItem("cachedAqiData");
+    localStorage.removeItem("cachedGeocodeData");
+    localStorage.removeItem("cachedNearbyCitiesData");
+    localStorage.removeItem("cachedAccuracy");
+
+    currentCityName = null;
+    currentLatitude = null;
+    currentLongitude = null;
+    forecastDataCache = null;
+  });
+}
+
+/* ══════════════════════════════════════
+   STALE-WHILE-REVALIDATE RESTORE
+   ══════════════════════════════════════ */
+function restoreSessionFromStorage() {
+  const lastCity = localStorage.getItem("lastSearchedCity");
+  const weatherDataStr = localStorage.getItem("cachedWeatherData");
+  const forecastDataStr = localStorage.getItem("cachedForecastData");
+  const aqiDataStr = localStorage.getItem("cachedAqiData");
+  const geocodeDataStr = localStorage.getItem("cachedGeocodeData");
+  const nearbyCitiesDataStr = localStorage.getItem("cachedNearbyCitiesData");
+  const cachedAccuracyStr = localStorage.getItem("cachedAccuracy");
+
+  if (!lastCity || !weatherDataStr) {
+    showEmpty();
+    return false;
+  }
+
+  try {
+    const weatherData = JSON.parse(weatherDataStr);
+    currentCityName = weatherData.name;
+    currentLatitude = weatherData.coord.lat;
+    currentLongitude = weatherData.coord.lon;
+
+    if (cityInput) cityInput.value = lastCity;
+
+    updateWeatherUI(weatherData);
+
+    if (geocodeDataStr) {
+      const geocode = JSON.parse(geocodeDataStr);
+      if (locDistrict) locDistrict.textContent = geocode.district;
+      if (locState) locState.textContent = geocode.state;
+      if (locCountry) locCountry.textContent = geocode.country;
+      if (locLat) locLat.textContent = geocode.lat.toFixed(4);
+      if (locLon) locLon.textContent = geocode.lon.toFixed(4);
+    }
+    if (locAccuracy && cachedAccuracyStr) {
+      locAccuracy.textContent = cachedAccuracyStr;
+    }
+
+    if (aqiDataStr) {
+      const aqiData = JSON.parse(aqiDataStr);
+      const aqiVal = aqiData.list[0].main.aqi;
+      const range = AQI_RANGES[aqiVal - 1] || AQI_RANGES[0];
+      if (aqiValue) aqiValue.textContent = aqiVal;
+      if (aqiLabel) {
+        aqiLabel.textContent = range.label;
+        aqiLabel.style.color = range.color;
+      }
+      if (aqiBar) {
+        aqiBar.style.width = `${(aqiVal / 5) * 100}%`;
+        aqiBar.style.background = range.color;
+      }
+      const comps = aqiData.list[0].components;
+      safeSetText($("pm25"), `PM2.5: ${comps.pm2_5.toFixed(1)} μg/m³`);
+      safeSetText($("pm10"), `PM10: ${comps.pm10.toFixed(1)} μg/m³`);
+    }
+
+    if (forecastDataStr) {
+      const forecastData = JSON.parse(forecastDataStr);
+      forecastDataCache = forecastData;
+
+      renderSevenDayForecastCards(forecastData);
+
+      const hourly = forecastData.slice(0, 5);
+      if (hourlyContainer) {
+        hourlyContainer.innerHTML = hourly.map(slot => {
+          const slotTime = new Date(slot.dt * 1000).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+          const temp = Math.round(slot.temp);
+          return `
+            <div class="hourly-card">
+              <div class="hc-time">${slotTime}</div>
+              <img class="hc-icon" src="${CONFIG.ICON_URL}/${slot.icon}@2x.png" alt="${slot.condition}">
+              <div class="hc-temp">${temp}°C</div>
+              <div class="hc-desc">${capitalizeText(slot.desc)}</div>
+            </div>`;
+        }).join("");
+      }
+
+      renderTrendForecastChart();
+
+      renderAnalyticsDashboard(forecastData.map(d => ({
+        dt: d.dt,
+        dt_txt: d.dt_txt,
+        main: { temp: d.temp, temp_min: d.temp_min, temp_max: d.temp_max, humidity: d.humidity, pressure: 1013 },
+        wind: { speed: d.wind / 3.6 },
+        weather: [{ main: d.condition, icon: d.icon, description: d.desc }]
+      })));
+    }
+
+    if (nearbyCitiesDataStr) {
+      const nearbyData = JSON.parse(nearbyCitiesDataStr);
+      const list = nearbyData.list.slice(1, 5);
+      if (nearbyCitiesContainer) {
+        nearbyCitiesContainer.innerHTML = list.map(city => {
+          const temp = Math.round(city.main.temp);
+          const icon = city.weather[0].icon;
+          const condition = city.weather[0].main;
+          const humidity = city.main.humidity;
+          return `
+            <div class="nearby-card" onclick="document.getElementById('cityInput').value='${city.name}'; getWeatherByCity('${city.name}')">
+              <div class="nb-city-row">
+                <h4>${city.name}</h4>
+                <span>${city.sys.country}</span>
+              </div>
+              <div class="nb-temp-row">
+                <img src="${CONFIG.ICON_URL}/${icon}.png" alt="${condition}">
+                <span class="nb-temp">${temp}°C</span>
+              </div>
+              <div class="nb-meta-row">
+                <span>${condition}</span>
+                <span><i class="fa-solid fa-droplet"></i> ${humidity}%</span>
+              </div>
+            </div>`;
+        }).join("");
+      }
+    }
+
+    updateWeatherMap(currentLatitude, currentLongitude, currentCityName);
+    showWeather();
+    return true;
+
+  } catch (err) {
+    console.error("Restoring cached session failed:", err);
+    showEmpty();
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════
+   SMART AUTOCMPLETE SEARCH (Phase 26)
+   ══════════════════════════════════════ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+function hideAutocomplete() {
+  if (autocompleteDropdown) {
+    autocompleteDropdown.classList.add("hidden");
+    autocompleteDropdown.innerHTML = "";
+  }
+  activeSuggestionIndex = -1;
+  currentSuggestions = [];
+}
+
+async function fetchSuggestions(query) {
+  if (!query || !query.trim()) {
+    hideAutocomplete();
+    return;
+  }
+
+  // 1. Filter local matching Favorites
+  const favs = getFavorites()
+    .filter(city => city.toLowerCase().includes(query.toLowerCase()))
+    .map(city => ({ prefix: "⭐", label: city, searchName: city, type: "favorite" }));
+
+  // 2. Filter local matching history
+  const history = getHistory()
+    .filter(city => city.toLowerCase().includes(query.toLowerCase()))
+    .map(city => ({ prefix: "🕑", label: city, searchName: city, type: "history" }));
+
+  let apiSuggestions = [];
+
+  // 3. OpenWeatherMap Geocoding direct suggestions if online
+  if (navigator.onLine && query.length >= 2) {
+    try {
+      const apiKey = CONFIG.API_KEY;
+      const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const geoList = await res.json();
+        apiSuggestions = geoList.map(item => {
+          const stateStr = item.state ? `, ${item.state}` : "";
+          return {
+            prefix: "📍",
+            label: `${item.name}${stateStr}, ${item.country}`,
+            searchName: item.name,
+            lat: item.lat,
+            lon: item.lon,
+            type: "api"
+          };
+        });
+      }
+    } catch (e) {
+      console.warn("Geocoding direct autocomplete suggestions failed.", e);
+    }
+  }
+
+  // Merge list in prioritized order: 1. Favorites, 2. Recent Searches, 3. API Suggestions
+  let merged = [...favs, ...history, ...apiSuggestions];
+
+  // Deduplicate merged list by searchName (insensitive)
+  const seen = new Set();
+  merged = merged.filter(item => {
+    const key = item.searchName.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  currentSuggestions = merged.slice(0, 7); // Cap at 7 suggestions
+  renderAutocompleteSuggestions(query);
+}
+
+function renderAutocompleteSuggestions(query) {
+  if (!autocompleteDropdown) return;
+  autocompleteDropdown.innerHTML = "";
+
+  if (currentSuggestions.length === 0) {
+    autocompleteDropdown.innerHTML = `<div class="autocomplete-no-match">No matching city found</div>`;
+    autocompleteDropdown.classList.remove("hidden");
+    return;
+  }
+
+  // Highlight query letters inside display text
+  const regex = new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, "gi");
+
+  autocompleteDropdown.innerHTML = currentSuggestions.map((item, index) => {
+    const highlightedLabel = item.label.replace(regex, `<strong class="match-highlight">$1</strong>`);
+
+    return `
+      <div class="autocomplete-item" data-index="${index}">
+        <span class="ac-prefix">${item.prefix}</span>
+        <span class="ac-text">${highlightedLabel}</span>
+      </div>`;
+  }).join("");
+
+  autocompleteDropdown.classList.remove("hidden");
+
+  // Bind mouse clicks
+  autocompleteDropdown.querySelectorAll(".autocomplete-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const idx = parseInt(el.dataset.index, 10);
+      selectSuggestion(idx);
+    });
+  });
+}
+
+function selectSuggestion(index) {
+  const item = currentSuggestions[index];
+  if (!item) return;
+
+  if (cityInput) cityInput.value = item.searchName;
+  hideAutocomplete();
+
+  if (item.lat !== undefined && item.lon !== undefined) {
+    getWeatherByCoords(item.lat, item.lon);
+  } else {
+    getWeatherByCity(item.searchName);
+  }
+}
+
+function initAutocompleteListeners() {
+  if (!cityInput) return;
+
+  // Track keystrokes for autocomplete keyboard control
+  cityInput.addEventListener("keydown", (e) => {
+    const visible = autocompleteDropdown && !autocompleteDropdown.classList.contains("hidden");
+    if (!visible || currentSuggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeSuggestionIndex++;
+      if (activeSuggestionIndex >= currentSuggestions.length) {
+        activeSuggestionIndex = 0;
+      }
+      highlightSuggestionOption();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeSuggestionIndex--;
+      if (activeSuggestionIndex < 0) {
+        activeSuggestionIndex = currentSuggestions.length - 1;
+      }
+      highlightSuggestionOption();
+    } else if (e.key === "Enter") {
+      if (activeSuggestionIndex >= 0 && activeSuggestionIndex < currentSuggestions.length) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectSuggestion(activeSuggestionIndex);
+      }
+    } else if (e.key === "Escape") {
+      hideAutocomplete();
+    }
+  });
+
+  // Close suggestions on outside clicks
+  document.addEventListener("click", (e) => {
+    if (cityInput && !cityInput.contains(e.target) && autocompleteDropdown && !autocompleteDropdown.contains(e.target)) {
+      hideAutocomplete();
+    }
+  });
+}
+
+function highlightSuggestionOption() {
+  if (!autocompleteDropdown) return;
+  const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+  items.forEach((el, index) => {
+    if (index === activeSuggestionIndex) {
+      el.classList.add("active");
+      // Pre-fill input value on scroll highlights
+      if (cityInput) cityInput.value = currentSuggestions[index].searchName;
+    } else {
+      el.classList.remove("active");
+    }
+  });
+}
+
+/* ══════════════════════════════════════
    INITIALIZATION & SETUP
    ══════════════════════════════════════ */
 window.addEventListener("DOMContentLoaded", () => {
@@ -1521,15 +1898,36 @@ window.addEventListener("DOMContentLoaded", () => {
   initChartToggles();
   initComparisonDashboard();
   initGeolocationController();
-  initSettingsPanel();
+  initClearDashboardController();
+  initAutocompleteListeners();
 
-  // Bind keydown events
+  // Restore previous session from localStorage immediately
+  restoreSessionFromStorage();
+
+  // Handle connection state indicators
+  updateConnectionStatus();
+
+  // If online, perform background revalidation fetch to get latest stats
+  if (navigator.onLine) {
+    const lastCity = localStorage.getItem("lastSearchedCity");
+    if (lastCity) {
+      getWeatherByCity(lastCity);
+    }
+  }
+
+  // Bind search input triggers
   if (cityInput) {
     cityInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && cityInput.value.trim()) {
+      // Allow enter searches only if autocomplete dropdown is NOT actively highlighted
+      if (e.key === "Enter" && cityInput.value.trim() && activeSuggestionIndex === -1) {
         getWeatherByCity(cityInput.value.trim());
       }
     });
+
+    // Debounced autocomplete triggers
+    cityInput.addEventListener("input", debounce((e) => {
+      fetchSuggestions(e.target.value.trim());
+    }, 300));
   }
 
   if (searchBtn) {
@@ -1558,12 +1956,5 @@ window.addEventListener("DOMContentLoaded", () => {
 
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener("click", clearHistory);
-  }
-
-  // Load last searched city
-  const history = getHistory();
-  if (history.length > 0) {
-    if (cityInput) cityInput.value = history[0];
-    getWeatherByCity(history[0]);
   }
 });

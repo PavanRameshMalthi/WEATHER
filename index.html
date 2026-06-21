@@ -32,6 +32,11 @@
   <!-- ══ Main Container ══════════════════════════════════ -->
   <div class="container">
 
+    <!-- ── Offline Status Banner ────────────────────────── -->
+    <div id="offlineBanner" class="offline-banner hidden">
+      <i class="fa-solid fa-wifi-slash"></i> Offline Mode: Running on cached local data. Search and GPS are disabled.
+    </div>
+
     <!-- ── Header ──────────────────────────────────────── -->
     <header class="glass">
       <div class="logo">
@@ -52,7 +57,13 @@
           <button id="searchBtn" aria-label="Search">
             <i class="fa-solid fa-magnifying-glass"></i>
           </button>
+          <div id="autocompleteDropdown" class="autocomplete-dropdown hidden"></div>
         </div>
+
+        <!-- Dashboard Clear -->
+        <button id="clearBtn" aria-label="Clear weather dashboard">
+          <i class="fa-solid fa-eraser"></i> Clear
+        </button>
 
         <!-- Geolocation -->
         <button id="locationBtn" aria-label="Use my location">
@@ -66,42 +77,11 @@
             <option value="">Option</option>
           </select>
           <button id="clearHistoryBtn" aria-label="Clear search history">
-            <i class="fa-solid fa-trash-can"></i> Clear
+            <i class="fa-solid fa-trash-can"></i> Clear History
           </button>
         </div>
-
-        <!-- Theme Toggle -->
-        <button id="themeToggle" aria-label="Toggle dark mode">
-          <i class="fa-solid fa-moon"></i>
-        </button>
-
-        <!-- Settings Toggle -->
-        <button id="settingsToggle" aria-label="API Key Settings">
-          <i class="fa-solid fa-gear"></i>
-        </button>
       </div>
     </header>
-
-    <!-- ── Settings Panel (Hidden by default) ───────────── -->
-    <div id="settingsPanel" class="settings-panel glass hidden">
-      <h3><i class="fa-solid fa-gear"></i> Settings & API Key</h3>
-      <div class="settings-group">
-        <label for="apiKeyInput">OpenWeatherMap API Key</label>
-        <div class="input-row">
-          <input type="password" id="apiKeyInput" placeholder="Enter your OWM API key...">
-          <button id="toggleApiKeyVisibility" class="icon-btn" aria-label="Toggle API Key visibility">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-        <p class="settings-hint">
-          Your key is saved locally in your browser cache. Leave blank to use the built-in demo key.
-        </p>
-      </div>
-      <div class="settings-actions">
-        <button id="saveSettingsBtn" class="primary-btn">Save Key</button>
-        <button id="resetSettingsBtn" class="secondary-btn">Reset</button>
-      </div>
-    </div>
 
     <!-- ── Empty State ──────────────────────────────────── -->
     <div id="emptyState" class="state-screen glass">
@@ -318,22 +298,22 @@
         </div>
       </section>
 
-      <!-- ── 5-Day Forecast & Chart ────────────────────── -->
+      <!-- ── 7-Day Forecast & Graph (Phase 21) ─────────── -->
       <div class="forecast-layout">
-        <!-- 5-Day Forecast Cards -->
-        <section class="forecast-section glass" aria-label="5-day forecast">
+        <!-- 7-Day Forecast Cards -->
+        <section class="forecast-section glass" aria-label="7-day forecast">
           <div class="section-title">
-            <i class="fa-solid fa-calendar-days"></i> 5-Day Forecast
+            <i class="fa-solid fa-calendar-days"></i> 7-Day Forecast
           </div>
           <div id="forecastContainer">
             <!-- Populated by JS -->
           </div>
         </section>
 
-        <!-- 7-Day / 5-Day Forecast Chart (Phase 8) -->
-        <section id="forecastChartSection" class="forecast-chart-section glass" aria-label="Forecast Chart">
+        <!-- 7-Day Forecast Chart -->
+        <section id="forecastChartSection" class="forecast-chart-section glass" aria-label="7-day forecast chart">
           <div class="section-title-row">
-            <span class="section-title"><i class="fa-solid fa-chart-line"></i> Trend Analysis Chart</span>
+            <span class="section-title"><i class="fa-solid fa-chart-line"></i> Trend Analysis Graph</span>
             <div class="chart-toggles">
               <button id="toggleChartTemp" class="chart-toggle-btn active">Temp</button>
               <button id="toggleChartHumidity" class="chart-toggle-btn">Humidity</button>
@@ -341,12 +321,12 @@
             </div>
           </div>
           <div class="chart-canvas-container">
-            <canvas id="forecastTrendChart"></canvas>
+            <canvas id="dailyForecastChart"></canvas>
           </div>
         </section>
       </div>
 
-      <!-- ── Weather Analytics Dashboard (Phase 7) ──────── -->
+      <!-- ── Weather Analytics Dashboard ───────────────── -->
       <section id="analyticsSection" class="analytics-section glass" aria-label="Weather Analytics Dashboard">
         <div class="section-title">
           <i class="fa-solid fa-chart-pie"></i> Weather Analytics Dashboard
@@ -385,7 +365,7 @@
         </div>
       </section>
 
-      <!-- ── Multi-City Comparison (Phase 6) ────────────── -->
+      <!-- ── Multi-City Comparison ────────────────────── -->
       <section id="comparisonSection" class="comparison-section glass" aria-label="Multi-City Comparison">
         <div class="comparison-header">
           <div class="section-title">
@@ -418,7 +398,7 @@
         </div>
       </section>
 
-      <!-- ── Nearby Cities Weather (Phase 13) ────────────── -->
+      <!-- ── Nearby Cities Weather ────────────────────── -->
       <section id="nearbyCitiesSection" class="nearby-cities-section glass" aria-label="Nearby Cities Weather">
         <div class="section-title">
           <i class="fa-solid fa-location-dot"></i> Weather in Nearby Cities
@@ -463,9 +443,6 @@
 
   <!-- App config (API key) -->
   <script src="js/config.js"></script>
-
-  <!-- Theme manager (runs before DOMContentLoaded) -->
-  <script src="js/theme.js"></script>
 
   <!-- Main application -->
   <script src="js/script.js"></script>

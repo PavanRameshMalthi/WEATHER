@@ -20,7 +20,17 @@
     grid-template-columns: 1fr 1fr;
   }
   #forecastContainer {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: none;
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  #forecastContainer::-webkit-scrollbar { display: none; }
+  .forecast-card {
+    min-width: 130px;
+    flex-shrink: 0;
   }
 }
 
@@ -61,13 +71,7 @@
     grid-template-columns: 1fr;
   }
 
-  #forecastContainer {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .forecast-card:nth-child(4),
-  .forecast-card:nth-child(5) {
-    display: none; /* show fewer cards on tablet */
-  }
+  /* 7-day forecast scrolls horizontally, no child hiding */
 }
 
 /* ── Mobile (≤ 768px) ───────────────────────────────────── */
@@ -108,7 +112,6 @@
     padding: 12px;
     font-size: 0.9rem;
   }
-  #themeToggle { width: 100%; border-radius: 50px; height: auto; padding: 13px; }
 
   /* Current weather */
   .current-weather { padding: 24px 20px; }
@@ -125,19 +128,9 @@
 
   /* Forecast: show all 5 but scroll horizontally */
   .forecast-section { padding: 18px; }
-  #forecastContainer {
-    grid-template-columns: none;
-    display: flex;
-    overflow-x: auto;
-    gap: 12px;
-    padding-bottom: 8px;
-    scrollbar-width: none;
-  }
-  #forecastContainer::-webkit-scrollbar { display: none; }
   .forecast-card {
-    min-width: 120px;
-    flex-shrink: 0;
-    display: flex !important; /* override nth-child hide */
+    min-width: 115px;
+    display: flex !important;
   }
 
   /* Hourly */
@@ -225,11 +218,6 @@
 }
 
 @media (max-width: 768px) {
-  .settings-panel {
-    width: calc(100% - 32px);
-    right: 16px;
-    top: 190px;
-  }
   .details-grid-horizontal {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
@@ -243,9 +231,6 @@
 }
 
 @media (max-width: 480px) {
-  .settings-panel {
-    top: 240px;
-  }
   .details-grid-horizontal {
     grid-template-columns: 1fr;
     gap: 10px;

@@ -13,16 +13,16 @@
   --primary-dark:   #0ea5e9;
   --accent:         #a78bfa;
 
-  /* Glass surfaces (light mode = day) */
-  --glass-bg:       rgba(255, 255, 255, 0.18);
-  --glass-border:   rgba(255, 255, 255, 0.30);
-  --glass-shadow:   0 8px 32px rgba(0, 0, 0, 0.15);
-  --glass-hover:    rgba(255, 255, 255, 0.25);
+  /* Premium dark glassmorphism surfaces */
+  --glass-bg:       rgba(15, 23, 42, 0.55);
+  --glass-border:   rgba(255, 255, 255, 0.10);
+  --glass-shadow:   0 8px 32px rgba(0, 0, 0, 0.25);
+  --glass-hover:    rgba(255, 255, 255, 0.08);
 
   /* Text */
-  --text-primary:   #ffffff;
-  --text-muted:     rgba(255, 255, 255, 0.70);
-  --text-faint:     rgba(255, 255, 255, 0.45);
+  --text-primary:   #f1f5f9;
+  --text-muted:     rgba(241, 245, 249, 0.65);
+  --text-faint:     rgba(241, 245, 249, 0.35);
 
   /* Borders */
   --border-radius-sm:  12px;
@@ -37,16 +37,6 @@
   /* Weather gradients (default: sunny) */
   --bg-from: #4facfe;
   --bg-to:   #00f2fe;
-}
-
-/* ── Dark Theme Overrides ───────────────────────────────── */
-body.dark {
-  --glass-bg:     rgba(15, 23, 42, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-hover:  rgba(255, 255, 255, 0.08);
-  --text-primary: #f1f5f9;
-  --text-muted:   rgba(241, 245, 249, 0.65);
-  --text-faint:   rgba(241, 245, 249, 0.35);
 }
 
 /* ── Weather Background Themes ──────────────────────────── */
@@ -256,11 +246,12 @@ header {
 }
 
 .search-box {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0;
   border-radius: 50px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.20);
   border: 1px solid rgba(255, 255, 255, 0.30);
   transition: box-shadow var(--transition-fast), background var(--transition-fast);
@@ -279,6 +270,8 @@ header {
   font-size: 0.95rem;
   width: 260px;
   padding: 13px 18px;
+  border-top-left-radius: 50px;
+  border-bottom-left-radius: 50px;
 }
 .search-box input::placeholder { color: var(--text-muted); }
 
@@ -296,6 +289,8 @@ header {
   color: white;
   padding: 13px 18px;
   font-size: 1rem;
+  border-top-right-radius: 50px;
+  border-bottom-right-radius: 50px;
 }
 .search-box button:hover { background: rgba(255,255,255,0.40); }
 
@@ -698,7 +693,7 @@ header {
 .hc-temp { font-size: 1.05rem; font-weight: 700; }
 .hc-desc { font-size: 0.72rem; color: var(--text-muted); text-align: center; line-height: 1.3; }
 
-/* ── 5-Day Forecast ─────────────────────────────────────── */
+/* ── 7-Day Forecast (Consolidated Cards) ────────────────── */
 .forecast-section {
   border-radius: var(--border-radius-md);
   padding: 22px;
@@ -707,30 +702,51 @@ header {
 
 #forecastContainer {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
 }
 
 .forecast-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 20px 12px;
+  gap: 6px;
+  padding: 16px 8px;
   border-radius: var(--border-radius-sm);
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
   transition: transform var(--transition-fast), background var(--transition-fast);
   text-align: center;
 }
-.forecast-card:hover { transform: translateY(-6px) scale(1.02); background: rgba(255,255,255,0.20); }
+.forecast-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.16); }
 
-.fc-day  { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-.fc-date { font-size: 0.75rem; color: var(--text-muted); }
-.fc-icon { width: 56px; height: 56px; object-fit: contain; }
-.fc-temp { font-size: 1.15rem; font-weight: 700; }
-.fc-min  { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
-.fc-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.3; }
+.fc-day  { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.fc-date { font-size: 0.7rem; color: var(--text-muted); }
+.fc-icon { width: 48px; height: 48px; object-fit: contain; }
+.fc-temp { font-size: 1.1rem; font-weight: 700; }
+.fc-min  { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+.fc-desc { font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin-bottom: 6px; }
+
+.fc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 8px;
+  width: 100%;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  align-items: center;
+}
+.fc-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.fc-details i {
+  color: var(--primary);
+  font-size: 0.75rem;
+}
 
 /* ── Bottom Grid (Favorites + Map) ─────────────────────── */
 .bottom-grid {
@@ -892,93 +908,26 @@ header {
 .sunrise,
 .sunset    { /* inherit .sun-time */ }
 
-/* ── Settings Panel & Dropdown ──────────────────────────── */
-.settings-panel {
-  position: absolute;
-  top: 90px;
-  right: 20px;
-  width: 320px;
-  padding: 24px;
-  border-radius: var(--border-radius-md);
-  z-index: 1000;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  animation: fadeSlideUp 0.3s ease both;
-}
-.settings-panel h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 14px;
+/* ── Dashboard Clear Button ────────────────────────────── */
+#clearBtn {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  padding: 10px 18px;
+  border-radius: 50px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.settings-group label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-.settings-group .input-row {
-  display: flex;
-  background: rgba(0,0,0,0.2);
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  overflow: hidden;
-}
-.settings-group input {
-  background: none;
-  border: none;
-  padding: 10px 12px;
-  color: white;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  flex: 1;
-  outline: none;
-}
-.settings-group .icon-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  padding: 10px;
-  cursor: pointer;
-}
-.settings-hint {
-  font-size: 0.7rem;
-  color: var(--text-faint);
-  line-height: 1.3;
-}
-.settings-actions {
-  display: flex;
-  gap: 8px;
-}
-.settings-actions button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
   transition: all var(--transition-fast);
 }
-.settings-actions .primary-btn {
-  background: var(--primary);
-  color: white;
-}
-.settings-actions .primary-btn:hover {
-  background: var(--primary-dark);
-}
-.settings-actions .secondary-btn {
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-.settings-actions .secondary-btn:hover {
-  background: rgba(255,255,255,0.18);
+#clearBtn:hover {
+  background: rgba(239, 68, 68, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 /* ── Layout Modifications & Structure grids ──────────────── */
@@ -1652,4 +1601,80 @@ body.bg-night {
 @keyframes starTwinkle {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ── Offline Status Banner ────────────────────────────── */
+.offline-banner {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fde047;
+  padding: 12px 20px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  backdrop-filter: blur(12px);
+  animation: fadeSlideUp 0.3s ease both;
+}
+.offline-banner i {
+  color: #f59e0b;
+}
+
+/* ── Smart Autocomplete Dropdown ──────────────────────── */
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--border-radius-sm);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 1100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.autocomplete-dropdown.hidden {
+  display: none !important;
+}
+.autocomplete-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.match-highlight {
+  color: var(--primary);
+  font-weight: 700;
+}
+.ac-prefix {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.ac-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.autocomplete-no-match {
+  padding: 16px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: center;
 }
